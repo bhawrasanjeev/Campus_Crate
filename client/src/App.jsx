@@ -16,10 +16,10 @@ function App() {
           <img src={viteLogo} className="vite" alt="Vite logo" />
         </div>
         <div>
-          <h1>Get started</h1>
+          <h1>LAZY CODER</h1>
           <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+            Campus Crate is a platform where students can upload their missing things
+            </p>
         </div>
         <button
           type="button"
