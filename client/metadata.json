@@ -1,0 +1,6 @@
+{
+  "name": "CampusCrate",
+  "description": "Campus Lost and Found digital safety net application for students and staff.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
