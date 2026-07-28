@@ -91,7 +91,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
             {reportType === 'lost' ? 'Report Lost Item' : 'Report Found Item'}
           </h1>
           <p className="page-subtitle">
-            Provide details below to post to the campus directory and trigger automated owner matching.
+            Provide details below to post to the college campus lost & found directory and trigger automated owner matching.
           </p>
         </div>
 

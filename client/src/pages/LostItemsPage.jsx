@@ -43,7 +43,7 @@ export const LostItemsPage = ({ onOpenClaim, onOpenDetails }) => {
             </span>
           </h1>
           <p className="page-subtitle">
-            Browse reported missing items on campus or submit a lost report.
+            Browse reported missing items on your college campus or submit a lost report.
           </p>
         </div>
 

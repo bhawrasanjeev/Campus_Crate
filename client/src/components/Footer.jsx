@@ -8,9 +8,9 @@ export const Footer = () => {
       <div className="footer-container">
         <div className="footer-left">
           <Package size={20} color="#15227b" />
-          <span className="footer-brand">CampusCrate</span>
+          <span className="footer-brand">CampusCrate College</span>
           <span className="footer-copy">
-            © {new Date().getFullYear()} CrateFound. For Campus Safety.
+            © {new Date().getFullYear()} CampusCrate. For college campus safety.
           </span>
         </div>
 

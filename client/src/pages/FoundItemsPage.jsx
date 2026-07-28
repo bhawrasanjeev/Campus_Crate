@@ -43,7 +43,7 @@ export const FoundItemsPage = ({ onOpenClaim, onOpenDetails }) => {
         <div className="page-title-group">
           <h1 className="page-title">Found Items</h1>
           <p className="page-subtitle">
-            Browse items recovered around campus by students, staff, and security.
+            Browse items recovered across your college campus by students, staff, and safety officials.
           </p>
         </div>
 
