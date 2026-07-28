@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Search, Send, Paperclip, Tag, CheckCheck } from 'lucide-react';
+import { Search, Send, Paperclip, Tag, CheckCheck, ArrowLeft } from 'lucide-react';
 import './MessagesPage.css';
 
 export const MessagesPage = () => {
@@ -14,8 +14,7 @@ export const MessagesPage = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const activeConv =
-    conversations.find((c) => c.id === activeConversationId) || conversations[0];
+  const activeConv = conversations.find((c) => c.id === activeConversationId);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -31,7 +30,7 @@ export const MessagesPage = () => {
 
   return (
     <div className="page-container">
-      <div className="messages-layout">
+      <div className={`messages-layout ${activeConv ? 'has-active-conv' : ''}`}>
         {/* Left Inbox Sidebar */}
         <div className="inbox-sidebar">
           <div className="inbox-header">
@@ -93,6 +92,13 @@ export const MessagesPage = () => {
           <div className="chat-main">
             <div className="chat-header">
               <div className="chat-user-info">
+                <button
+                  type="button"
+                  className="btn-back-sidebar"
+                  onClick={() => setActiveConversationId(null)}
+                >
+                  <ArrowLeft size={18} />
+                </button>
                 <img
                   src={
                     activeConv.participantAvatar ||
@@ -180,14 +186,7 @@ export const MessagesPage = () => {
             </form>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-text-muted)',
-            }}
-          >
+          <div className="chat-placeholder">
             Select a conversation on the left to start messaging.
           </div>
         )}

@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Phone,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './ReportItemPage.css';
 
 const PRESET_PHOTOS = [
@@ -22,7 +23,8 @@ const PRESET_PHOTOS = [
 ];
 
 export const ReportItemPage = ({ onOpenDetails }) => {
-  const { addItem, setCurrentPage, currentUser, reportInitialType, items } = useApp();
+  const { addItem, currentUser, reportInitialType, items } = useApp();
+  const navigate = useNavigate();
 
   const [reportType, setReportType] = useState(reportInitialType);
   const [title, setTitle] = useState('');
@@ -34,9 +36,19 @@ export const ReportItemPage = ({ onOpenDetails }) => {
   const [date, setDate] = useState('Today, 10:30 AM');
   const [time, setTime] = useState('10:30 AM');
   const [imageUrl, setImageUrl] = useState('');
-  const [verificationQuestion, setVerificationQuestion] = useState('');
   const [contactPhone, setContactPhone] = useState('+1 (555) 234-5678');
   const [submitted, setSubmitted] = useState(false);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result); // sets base64 data URL
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const potentialMatches = items.filter(
     (it) => it.type !== reportType && it.status === 'active'
@@ -70,7 +82,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
       date: date || 'Today',
       time: time || 'Just now',
       imageUrl: imageUrl.trim(),
-      verificationQuestion: verificationQuestion.trim() || 'Describe a unique feature or mark on this item.',
+      verificationQuestion: 'Please contact directly via chat.',
       contactPhone: contactPhone.trim() || '+1 (555) 911-0022',
       reporterName: currentUser?.name || 'Anonymous Student',
       reporterAvatar: currentUser?.avatar,
@@ -79,7 +91,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
 
     setSubmitted(true);
     setTimeout(() => {
-      setCurrentPage(reportType === 'lost' ? 'lost' : 'found');
+      navigate(reportType === 'lost' ? '/lost' : '/found');
     }, 1500);
   };
 
@@ -166,9 +178,9 @@ export const ReportItemPage = ({ onOpenDetails }) => {
         <form onSubmit={handleSubmit}>
           <div className="report-page-layout">
             <div className="left-form-column">
-              {/* Section 1: Basic Details */}
+              {/* Section 1: Item Information */}
               <div className="form-card-section">
-                <h2 className="section-heading">Basic Details</h2>
+                <h2 className="section-heading">1. Item Information</h2>
 
                 <div className="form-group" style={{ marginBottom: '16px' }}>
                   <label className="form-label">
@@ -184,7 +196,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                   />
                 </div>
 
-                <div className="form-grid-2">
+                <div className="form-grid-2" style={{ marginBottom: '16px' }}>
                   <div className="form-group">
                     <label className="form-label">
                       Category <span className="required-star">*</span>
@@ -216,7 +228,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                 </div>
 
                 {tags.length > 0 && (
-                  <div className="tags-list" style={{ marginTop: '12px' }}>
+                  <div className="tags-list" style={{ marginBottom: '16px' }}>
                     {tags.map((tag) => (
                       <span key={tag} className="tag-chip">
                         #{tag}{' '}
@@ -231,11 +243,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                     ))}
                   </div>
                 )}
-              </div>
 
-              {/* Section 2: Detailed Description */}
-              <div className="form-card-section">
-                <h2 className="section-heading">Description</h2>
                 <div className="form-group">
                   <label className="form-label">Detailed Description</label>
                   <textarea
@@ -248,9 +256,9 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                 </div>
               </div>
 
-              {/* Section 3: When & Where */}
+              {/* Section 2: Event & Contact Details */}
               <div className="form-card-section">
-                <h2 className="section-heading">When & Where</h2>
+                <h2 className="section-heading">2. Event & Contact Details</h2>
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">
@@ -292,49 +300,10 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                     required
                   />
                 </div>
-              </div>
 
-              {/* Section 4: Reference Photo */}
-              <div className="form-card-section">
-                <h2 className="section-heading">Reference Photo</h2>
-                <div className="form-group">
-                  <label className="form-label">Image URL or Pick Sample</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Paste image link URL (e.g. https://...)"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                  />
-                </div>
-
-                <div className="preset-photos-row">
-                  <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                    Quick presets:
-                  </span>
-                  {PRESET_PHOTOS.map((p) => (
-                    <img
-                      key={p.label}
-                      src={p.url}
-                      alt={p.label}
-                      className={`preset-photo-thumb ${
-                        imageUrl === p.url ? 'selected' : ''
-                      }`}
-                      onClick={() => setImageUrl(p.url)}
-                      title={p.label}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Section 5: Contact Information */}
-              <div className="form-card-section">
-                <h2 className="section-heading">
-                  <Phone size={20} /> Contact Phone Number
-                </h2>
-                <div className="form-group">
+                <div className="form-group" style={{ marginTop: '16px' }}>
                   <label className="form-label">
-                    Finder / Reporter Contact Phone Number <span className="required-star">*</span>
+                    Contact Phone Number <span className="required-star">*</span>
                   </label>
                   <input
                     type="tel"
@@ -350,25 +319,76 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                 </div>
               </div>
 
-              {/* Section 6: Security Question */}
+              {/* Section 3: Reference Photo */}
               <div className="form-card-section">
-                <h2 className="section-heading">
-                  <Shield size={20} /> Security Verification Detail
-                </h2>
-                <div className="form-group">
-                  <label className="form-label">
-                    Verification Question for Claimants
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. What specific sticker is on the bottom base?"
-                    value={verificationQuestion}
-                    onChange={(e) => setVerificationQuestion(e.target.value)}
-                  />
-                  <span className="form-help">
-                    Claimants will be asked this question before receiving your contact info or item pickup.
-                  </span>
+                <h2 className="section-heading">3. Reference Photo</h2>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', alignItems: 'center' }}>
+                  <div className="form-group">
+                    <label className="form-label">Upload Local Image File</label>
+                    <div 
+                      onClick={() => document.getElementById('file-upload-input').click()}
+                      style={{
+                        border: '2px dashed var(--color-border)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '24px 16px',
+                        textAlign: 'center',
+                        backgroundColor: 'var(--color-bg)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--color-primary-light)';
+                        e.currentTarget.style.backgroundColor = 'var(--color-surface-dim)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--color-border)';
+                        e.currentTarget.style.backgroundColor = 'var(--color-bg)';
+                      }}
+                    >
+                      <Upload size={24} style={{ color: 'var(--color-text-muted)', marginBottom: '8px' }} />
+                      <div style={{ fontSize: '13px', fontWeight: 600 }}>Click to upload file</div>
+                      <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px' }}>PNG, JPG, WebP up to 5MB</div>
+                    </div>
+                    <input
+                      type="file"
+                      id="file-upload-input"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="form-group">
+                      <label className="form-label">Or Paste Image URL</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Paste image link URL (e.g. https://...)"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="preset-photos-row" style={{ marginTop: '12px' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                        Presets:
+                      </span>
+                      {PRESET_PHOTOS.map((p) => (
+                        <img
+                          key={p.label}
+                          src={p.url}
+                          alt={p.label}
+                          className={`preset-photo-thumb ${
+                            imageUrl === p.url ? 'selected' : ''
+                          }`}
+                          onClick={() => setImageUrl(p.url)}
+                          title={p.label}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -376,7 +396,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                 <button
                   type="button"
                   className="btn-cancel"
-                  onClick={() => setCurrentPage(reportType)}
+                  onClick={() => navigate(`/${reportType}`)}
                 >
                   Cancel
                 </button>

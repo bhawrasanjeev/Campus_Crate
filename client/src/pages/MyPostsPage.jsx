@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, CheckCircle2, Trash2, Plus, AlertCircle } from 'lucide-react';
 import './MyPostsPage.css';
 
 export const MyPostsPage = ({ onOpenDetails }) => {
-  const { items, setCurrentPage, setReportInitialType } = useApp();
+  const { items, setReportInitialType } = useApp();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
 
   const myItems = items.filter((item) => {
@@ -27,7 +29,7 @@ export const MyPostsPage = ({ onOpenDetails }) => {
           className="btn-report"
           onClick={() => {
             setReportInitialType('lost');
-            setCurrentPage('report');
+            navigate('/report');
           }}
         >
           <Plus size={18} />

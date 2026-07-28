@@ -1,11 +1,11 @@
 import React from 'react';
 import { Search, Home, MapPin, MessageSquare, Archive, ShieldCheck, LogIn } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { NavLink, Link } from 'react-router-dom';
+import './Navbar.css';
 
 export const Navbar = () => {
   const {
-    currentPage,
-    setCurrentPage,
     currentUser,
     setGlobalSearchQuery,
     globalSearchQuery,
@@ -20,121 +20,73 @@ export const Navbar = () => {
     { key: 'admin', label: 'Admin', icon: ShieldCheck },
   ];
 
+  // Filter navItems: only show Admin tab if user is an admin
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.key === 'admin') {
+      return currentUser?.role === 'admin';
+    }
+    return true;
+  });
+
   return (
-    <header
-      style={{
-        width: '100%',
-        padding: '12px 22px',
-        backgroundColor: 'var(--color-surface)',
-        borderBottom: '1px solid var(--color-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '16px',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            fontWeight: 700,
-            fontSize: '18px',
-            color: 'var(--color-primary)',
-          }}
-        >
+    <header className="navbar-header">
+      <div className="navbar-brand-section">
+        <Link to="/lost" className="navbar-logo-link">
           <Home size={24} />
           <span>CampusCrate</span>
-        </div>
+        </Link>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(6, auto)',
-            gap: '8px',
-            alignItems: 'center',
-            overflowX: 'auto',
-          }}
-        >
-          {navItems.map((item) => {
+        <div className="navbar-nav-links">
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
+            const path = item.key === 'admin' ? '/admin' : `/${item.key}`;
+            
             return (
-              <button
+              <NavLink
                 key={item.key}
-                onClick={() => setCurrentPage(item.key)}
-                style={{
+                to={path}
+                style={({ isActive }) => ({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                   padding: '10px 12px',
                   borderRadius: '9999px',
                   border: '1px solid transparent',
-                  backgroundColor:
-                    currentPage === item.key
-                      ? 'var(--color-primary-bg)'
-                      : 'transparent',
-                  color:
-                    currentPage === item.key
-                      ? 'var(--color-primary)'
-                      : 'var(--color-text-secondary)',
+                  backgroundColor: isActive
+                    ? 'var(--color-primary-bg)'
+                    : 'transparent',
+                  color: isActive
+                    ? 'var(--color-primary)'
+                    : 'var(--color-text-secondary)',
                   fontWeight: 600,
-                }}
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                })}
               >
                 <Icon size={16} />
                 {item.label}
-              </button>
+              </NavLink>
             );
           })}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div
-          style={{
-            position: 'relative',
-            display: 'inline-flex',
-            alignItems: 'center',
-            width: '280px',
-            backgroundColor: 'var(--color-bg)',
-            borderRadius: '9999px',
-            border: '1px solid var(--color-border)',
-            padding: '8px 12px',
-          }}
-        >
-          <Search size={18} className="search-icon" />
+      <div className="navbar-actions-section">
+        <div className="navbar-search-wrapper">
+          <Search size={18} className="search-icon" style={{ marginRight: '8px', color: 'var(--color-text-muted)' }} />
           <input
             type="search"
             value={globalSearchQuery}
             onChange={(e) => setGlobalSearchQuery(e.target.value)}
             placeholder="Search college campus items..."
-            style={{
-              width: '100%',
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              fontSize: '14px',
-              color: 'var(--color-text-main)',
-            }}
+            className="navbar-search-input"
           />
         </div>
 
-        <button
-          onClick={() => setCurrentPage('login')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 14px',
-            borderRadius: '9999px',
-            backgroundColor: 'var(--color-primary)',
-            color: '#fff',
-            fontWeight: 700,
-          }}
-        >
+        <Link to="/login" className="navbar-login-btn">
           <LogIn size={16} />
           {currentUser ? 'Account' : 'Login'}
-        </button>
+        </Link>
       </div>
     </header>
   );

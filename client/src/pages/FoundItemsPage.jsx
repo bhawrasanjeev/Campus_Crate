@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { ItemCard } from '../components/ItemCard';
 import { CATEGORIES } from '../data/mockData';
 import { Plus, PackageX, Sparkles, ChevronRight } from 'lucide-react';
 import './FoundItemsPage.css';
 
 export const FoundItemsPage = ({ onOpenClaim, onOpenDetails }) => {
-  const { items, setCurrentPage, setReportInitialType, globalSearchQuery } = useApp();
+  const { items, setReportInitialType, globalSearchQuery } = useApp();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
 
   const foundItems = items.filter((item) => item.type === 'found');
@@ -27,7 +29,7 @@ export const FoundItemsPage = ({ onOpenClaim, onOpenDetails }) => {
 
   const handleReportFoundClick = () => {
     setReportInitialType('found');
-    setCurrentPage('report');
+    navigate('/report');
   };
 
   return (

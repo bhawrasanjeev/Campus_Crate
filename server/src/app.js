@@ -3,6 +3,9 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const itemRoutes = require("./routes/itemRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -17,6 +20,9 @@ app.use(express.json());
 // API Route Mounts
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/items", itemRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Healthcheck Route
 app.get("/", (req, res) => {

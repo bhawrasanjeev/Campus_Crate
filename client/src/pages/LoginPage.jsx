@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CURRENT_USER } from '../data/mockData';
 import { Package, ShieldCheck, Lock, Mail, User, Building, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 
 export const LoginPage = () => {
-  const { currentUser, setCurrentUser, setCurrentPage, login, register, loginWithGoogle, authLoading, authError, setAuthError } = useApp();
+  const { currentUser, setCurrentUser, login, register, loginWithGoogle, authLoading, authError, setAuthError } = useApp();
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -26,7 +28,9 @@ export const LoginPage = () => {
 
     if (isRegisterMode) {
       const res = await register(formData);
-      if (!res.success && res.isOffline) {
+      if (res.success) {
+        navigate('/lost');
+      } else if (!res.success && res.isOffline) {
         // Fallback for offline UI testing only if backend is unreachable
         setCurrentUser({
           id: `usr_${Date.now()}`,
@@ -36,11 +40,13 @@ export const LoginPage = () => {
           department: formData.department,
           avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         });
-        setCurrentPage('lost');
+        navigate('/lost');
       }
     } else {
       const res = await login(formData.email, formData.password);
-      if (!res.success && res.isOffline) {
+      if (res.success) {
+        navigate('/lost');
+      } else if (!res.success && res.isOffline) {
         // Fallback for offline UI testing only if backend is unreachable
         setCurrentUser({
           id: 'usr_mock_1',
@@ -50,14 +56,14 @@ export const LoginPage = () => {
           department: 'Computer Science',
           avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         });
-        setCurrentPage('lost');
+        navigate('/lost');
       }
     }
   };
 
   const handleSignInAsStudent = () => {
     setCurrentUser(CURRENT_USER);
-    setCurrentPage('lost');
+    navigate('/lost');
   };
 
   const handleSignInAsAdmin = () => {
@@ -68,7 +74,7 @@ export const LoginPage = () => {
       role: 'admin',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
     });
-    setCurrentPage('admin');
+    navigate('/admin');
   };
 
   const handleGoogleSignIn = async () => {
@@ -79,7 +85,10 @@ export const LoginPage = () => {
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
       googleId: 'g_' + Date.now(),
     };
-    await loginWithGoogle(googleUser);
+    const res = await loginWithGoogle(googleUser);
+    if (res.success) {
+      navigate('/lost');
+    }
   };
 
   return (

@@ -11,10 +11,60 @@
   margin-top: 24px;
 }
 
+.chat-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-align: center;
+  padding: 40px;
+}
+
 @media (max-width: 768px) {
   .messages-layout {
     grid-template-columns: 1fr;
-    height: auto;
+    height: calc(100vh - 120px);
+    min-height: 480px;
+    margin-top: 12px;
+  }
+
+  /* Default mobile state: show list, hide chat window */
+  .messages-layout .inbox-sidebar {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  .messages-layout .chat-main {
+    display: none;
+  }
+
+  .messages-layout .btn-back-sidebar {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 8px;
+    margin-right: 8px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+  }
+
+  /* When conversation is active: hide list, show chat window */
+  .messages-layout.has-active-conv .inbox-sidebar {
+    display: none;
+  }
+
+  .messages-layout.has-active-conv .chat-main {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  .chat-placeholder {
+    display: none !important;
   }
 }
 
@@ -259,4 +309,8 @@
 
 .btn-send:hover {
   background-color: var(--color-amber-hover);
+}
+
+.btn-back-sidebar {
+  display: none;
 }

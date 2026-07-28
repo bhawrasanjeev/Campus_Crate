@@ -12,7 +12,6 @@ const AppContext = createContext(null);
 const API_BASE_URL = 'http://localhost:5050/api';
 
 export const AppProvider = ({ children }) => {
-  const [currentPage, setCurrentPage] = useState('lost');
   const [selectedItemForClaim, setSelectedItemForClaim] = useState(null);
   const [selectedItemForDetails, setSelectedItemForDetails] = useState(null);
   const [reportInitialType, setReportInitialType] = useState('lost');
@@ -30,9 +29,7 @@ export const AppProvider = ({ children }) => {
   // Items & Chat State
   const [items, setItems] = useState(DEFAULT_ITEMS);
   const [conversations, setConversations] = useState(DEFAULT_CONVERSATIONS);
-  const [activeConversationId, setActiveConversationId] = useState(
-    DEFAULT_CONVERSATIONS[0]?.id || null,
-  );
+  const [activeConversationId, setActiveConversationId] = useState(null);
   const [claims, setClaims] = useState(DEFAULT_CLAIMS);
   const [socket, setSocket] = useState(null);
 
@@ -107,7 +104,6 @@ export const AppProvider = ({ children }) => {
       setToken(data.token);
       localStorage.setItem('campuscrate_user', JSON.stringify(data));
       localStorage.setItem('campuscrate_token', data.token);
-      setCurrentPage('lost');
       return { success: true };
     } catch (err) {
       const isOffline = err.name === 'TypeError' || err.message.includes('Failed to fetch');
@@ -140,7 +136,6 @@ export const AppProvider = ({ children }) => {
       setToken(data.token);
       localStorage.setItem('campuscrate_user', JSON.stringify(data));
       localStorage.setItem('campuscrate_token', data.token);
-      setCurrentPage('lost');
       return { success: true };
     } catch (err) {
       const isOffline = err.name === 'TypeError' || err.message.includes('Failed to fetch');
@@ -173,7 +168,6 @@ export const AppProvider = ({ children }) => {
       setToken(data.token);
       localStorage.setItem('campuscrate_user', JSON.stringify(data));
       localStorage.setItem('campuscrate_token', data.token);
-      setCurrentPage('lost');
       return { success: true };
     } catch (err) {
       const isOffline = err.name === 'TypeError' || err.message.includes('Failed to fetch');
@@ -191,7 +185,6 @@ export const AppProvider = ({ children }) => {
           token: 'mock_google_token',
         };
         setCurrentUser(dummyUser);
-        setCurrentPage('lost');
         return { success: true };
       }
       return { success: false, error: errorMsg };
@@ -205,7 +198,6 @@ export const AppProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem('campuscrate_user');
     localStorage.removeItem('campuscrate_token');
-    setCurrentPage('lost');
   };
 
   const addItem = (item) => {
@@ -295,7 +287,7 @@ export const AppProvider = ({ children }) => {
   };
 
   // Start chat with item owner
-  const startChatWithUser = (ownerName, itemTitle, ownerAvatar = null) => {
+  const startChatWithUser = (ownerName, itemTitle, ownerAvatar = null, itemType = 'found', itemLocation = 'Main Campus') => {
     const existingConv = conversations.find(
       (c) => c.participantName === ownerName || c.itemTitle === itemTitle
     );
@@ -303,6 +295,10 @@ export const AppProvider = ({ children }) => {
     if (existingConv) {
       setActiveConversationId(existingConv.id || existingConv._id);
     } else {
+      const initialMessageText = itemType === 'found'
+        ? `Hi, I think this is my ${itemTitle}. I lost it near the ${itemLocation}.`
+        : `Hi, I found your ${itemTitle}. I found it near the ${itemLocation}.`;
+
       const newConv = {
         id: `conv_${Date.now()}`,
         participantName: ownerName || 'Campus Student',
@@ -311,13 +307,13 @@ export const AppProvider = ({ children }) => {
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         online: true,
         itemTitle: itemTitle || 'Item Inquiry',
-        itemLocation: 'Main Campus',
-        lastMessage: 'Hi, I am reaching out regarding this item.',
+        itemLocation: itemLocation,
+        lastMessage: initialMessageText,
         lastMessageTime: 'Just now',
         messages: [
           {
             id: `msg_init_${Date.now()}`,
-            text: `Hi, I am reaching out regarding "${itemTitle}".`,
+            text: initialMessageText,
             timestamp: 'Just now',
             isMe: true,
           },
@@ -326,13 +322,10 @@ export const AppProvider = ({ children }) => {
       setConversations((prev) => [newConv, ...prev]);
       setActiveConversationId(newConv.id);
     }
-    setCurrentPage('messages');
   };
 
   const value = useMemo(
     () => ({
-      currentPage,
-      setCurrentPage,
       selectedItemForClaim,
       setSelectedItemForClaim,
       selectedItemForDetails,
@@ -369,7 +362,6 @@ export const AppProvider = ({ children }) => {
       authLoading,
       claims,
       conversations,
-      currentPage,
       currentUser,
       globalSearchQuery,
       items,

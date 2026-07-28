@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { ItemCard } from '../components/ItemCard';
 import { CATEGORIES } from '../data/mockData';
 import { Search, Plus, PackageX, ChevronRight } from 'lucide-react';
 import './LostItemsPage.css';
 
 export const LostItemsPage = ({ onOpenClaim, onOpenDetails }) => {
-  const { items, setCurrentPage, setReportInitialType, globalSearchQuery } = useApp();
+  const { items, setReportInitialType, globalSearchQuery } = useApp();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [timeFilter, setTimeFilter] = useState('Any Time');
   const [sortBy, setSortBy] = useState('Newest');
@@ -29,7 +31,7 @@ export const LostItemsPage = ({ onOpenClaim, onOpenDetails }) => {
 
   const handleReportLostClick = () => {
     setReportInitialType('lost');
-    setCurrentPage('report');
+    navigate('/report');
   };
 
   return (

@@ -1,62 +1,29 @@
 import React from 'react';
 import { X, MapPin, Calendar, Tag, Info, Phone } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import './ItemDetailsModal.css';
 
 export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
   const { startChatWithUser } = useApp();
+  const navigate = useNavigate();
+
   if (!item) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(13, 17, 34, 0.55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        zIndex: 999,
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          width: 'min(940px, 100%)',
-          maxHeight: 'calc(100vh - 40px)',
-          overflowY: 'auto',
-          backgroundColor: 'var(--color-surface)',
-          borderRadius: '20px',
-          boxShadow: 'var(--shadow-modal)',
-          position: 'relative',
-          padding: '30px',
-        }}
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className="details-modal-overlay" onClick={onClose}>
+      <div className="details-modal-card" onClick={(event) => event.stopPropagation()}>
         <button
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            right: '22px',
-            top: '22px',
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface)',
-            cursor: 'pointer',
-          }}
+          className="details-modal-close-btn"
           aria-label="Close details modal"
         >
           <X size={18} />
         </button>
 
         <div style={{ display: 'grid', gap: '24px' }}>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
+          <div className="details-modal-layout">
+            <div className="details-modal-info">
               <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'var(--color-primary)' }}>
                 {item.title}
               </h2>
@@ -80,30 +47,15 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
               </div>
             </div>
 
-            <div style={{ width: '260px', minWidth: '260px' }}>
+            <div className="details-modal-media">
               {item.imageUrl ? (
                 <img
                   src={item.imageUrl}
                   alt={item.title}
-                  style={{
-                    width: '100%',
-                    borderRadius: '18px',
-                    objectFit: 'cover',
-                    aspectRatio: '4 / 3',
-                  }}
+                  className="details-modal-image"
                 />
               ) : (
-                <div
-                  style={{
-                    width: '100%',
-                    minHeight: '220px',
-                    borderRadius: '18px',
-                    backgroundColor: 'var(--color-surface-dim)',
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: 'var(--color-text-muted)',
-                  }}
-                >
+                <div className="details-modal-no-image">
                   No image available
                 </div>
               )}
@@ -162,12 +114,19 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="details-modal-actions">
             <button
               type="button"
               onClick={() => {
-                startChatWithUser(item.reportedBy || item.reporterName || 'Item Poster', item.title, item.reporterAvatar);
+                startChatWithUser(
+                  item.reportedBy || item.reporterName || 'Item Poster',
+                  item.title,
+                  item.reporterAvatar,
+                  item.type,
+                  item.location
+                );
                 onClose();
+                navigate('/messages');
               }}
               style={{
                 padding: '12px 18px',
@@ -181,7 +140,7 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
                 cursor: 'pointer',
               }}
             >
-              💬 Message Owner
+              {item.type === 'lost' ? '💬 Message Owner' : '💬 Message Finder'}
             </button>
             <button
               type="button"
@@ -201,8 +160,15 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
               <button
                 type="button"
                 onClick={() => {
-                  onOpenClaim(item);
+                  startChatWithUser(
+                    item.reportedBy || item.reporterName || 'Item Owner',
+                    item.title,
+                    item.reporterAvatar,
+                    'lost', // Act as finder, prefill "Hi, I found your..."
+                    item.location
+                  );
                   onClose();
+                  navigate('/messages');
                 }}
                 style={{
                   padding: '12px 18px',
