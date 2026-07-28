@@ -1,45 +1,26 @@
-const express = require("express");
-const cors = require("cors");
-
-const authRoutes = require("./routes/authRoutes");
-const chatRoutes = require("./routes/chatRoutes");
+const express = require('express');
+const cors = require('cors');
 
 const app = express();
 
-app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(cors()); 
+app.use(express.json()); 
 
-app.use(express.json());
+const authRoutes = require('./routes/authRoutes');
+const itemRoutes = require('./routes/itemRoutes');
+const uploadRoutes = require("./routes/uploadRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+app.use("/api/reports", reportRoutes);
 
-// API Route Mounts
-app.use("/api/auth", authRoutes);
-app.use("/api/chat", chatRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/items', itemRoutes);
 
-// Healthcheck Route
-app.get("/", (req, res) => {
-    res.json({
-        status: "Online",
-        service: "CampusCrate Backend API",
-        time: new Date().toISOString()
-    });
-});
-
-// 404 Route Handler
-app.use((req, res, next) => {
-    res.status(404).json({ message: `Route not found - ${req.originalUrl}` });
-});
-
-// Global Error Handler
-app.use((err, req, res, next) => {
-    console.error("Unhandled Server Error:", err.stack);
-    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-    res.status(statusCode).json({
-        message: err.message || "Internal Server Error",
-        stack: process.env.NODE_ENV === "production" ? null : err.stack
-    });
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    success: true, 
+    message: 'Welcome to the CampusCrate API! 🚀' 
+  });
 });
 
 module.exports = app;

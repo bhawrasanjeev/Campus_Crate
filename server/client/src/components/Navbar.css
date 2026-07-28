@@ -1,0 +1,123 @@
+.navbar-header {
+  width: 100%;
+  padding: 12px 22px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.navbar-brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.navbar-nav-links {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+}
+
+/* Hide scrollbar for nav links */
+.navbar-nav-links::-webkit-scrollbar {
+  display: none;
+}
+
+.navbar-actions-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-search-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 280px;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+}
+
+.navbar-search-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--color-text-main);
+}
+
+.navbar-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Media Queries for responsiveness */
+@media (max-width: 900px) {
+  .navbar-header {
+    flex-direction: column;
+    padding: 12px 16px;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .navbar-brand-section {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .navbar-nav-links {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 4px 0;
+  }
+
+  .navbar-actions-section {
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .navbar-search-wrapper {
+    flex: 1;
+    width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-logo-link span {
+    display: none; /* Hide brand text on very small screens to fit buttons */
+  }
+  
+  .navbar-nav-links {
+    gap: 4px;
+  }
+}
