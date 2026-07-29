@@ -70,32 +70,49 @@ export const FoundItemsPage = ({ onOpenDetails }) => {
       </div>
 
       {filteredItems.length === 0 ? (
-        <div className="empty-state">
-          <PackageX size={48} color="var(--color-text-muted)" style={{ margin: '0 auto' }} />
-          <h3 className="empty-title">No found items in this category</h3>
-          <p className="empty-desc">
-            Try selecting another category or report a new found item.
+        <div className="empty-state" style={{ padding: '60px 20px', textAlign: 'center' }}>
+          <PackageX size={56} color="var(--color-text-muted)" style={{ margin: '0 auto 12px' }} />
+          <h3 className="empty-title" style={{ fontSize: '18px', fontWeight: 700 }}>No found items in this category</h3>
+          <p className="empty-desc" style={{ color: 'var(--color-text-muted)', marginTop: '6px' }}>
+            There are currently no found items reported. Be the first to report a found item!
           </p>
+          <button
+            type="button"
+            onClick={handleReportFoundClick}
+            style={{
+              marginTop: '16px',
+              padding: '10px 20px',
+              borderRadius: '9999px',
+              backgroundColor: 'var(--color-primary)',
+              color: '#fff',
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            + Report Found Item
+          </button>
         </div>
       ) : (
-        <div className="items-grid">
-          {filteredItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onSelect={onOpenDetails}
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="items-grid">
+            {filteredItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onSelect={onOpenDetails}
+              />
+            ))}
+          </div>
 
-      <div className="pagination">
-        <button className="page-btn active">1</button>
-        <button className="page-btn">2</button>
-        <button className="page-btn" title="Next Page">
-          <ChevronRight size={18} />
-        </button>
-      </div>
+          <div className="pagination">
+            <button className="page-btn active">1</button>
+            <button className="page-btn" title="Next Page">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

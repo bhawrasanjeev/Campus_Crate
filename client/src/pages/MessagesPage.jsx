@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Search, Send, Paperclip, Tag, ArrowLeft } from 'lucide-react';
+import { Search, Send, Paperclip, Tag, ArrowLeft, MessageSquare } from 'lucide-react';
 import './MessagesPage.css';
 
 export const MessagesPage = () => {
@@ -72,59 +72,77 @@ export const MessagesPage = () => {
           </div>
 
           <div className="conversation-list">
-            {filteredConversations.map((conv) => {
-              const convId = conv.id || conv._id;
-              const isUnread = unreadConvIds.includes(convId);
-              const isActive = convId === activeConv?.id || convId === activeConv?._id;
+            {filteredConversations.length > 0 ? (
+              filteredConversations.map((conv) => {
+                const convId = conv.id || conv._id;
+                const isUnread = unreadConvIds.includes(convId);
+                const isActive = convId === activeConv?.id || convId === activeConv?._id;
 
-              return (
-                <div
-                  key={convId}
-                  className={`conversation-item ${isActive ? 'active' : ''}`}
-                  onClick={() => handleSelectConv(convId)}
-                >
-                  <div className="conv-avatar-wrapper">
-                    <img
-                      src={conv.participantAvatar}
-                      alt={conv.participantName}
-                      className="conv-avatar"
-                    />
-                    <div className="online-dot" />
-                  </div>
-                  <div className="conv-content">
-                    <div className="conv-top-row">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className="conv-name">{conv.participantName}</span>
-                        {isUnread && (
-                          <span
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#10b981',
-                              boxShadow: '0 0 8px #10b981',
-                              display: 'inline-block',
-                            }}
-                            title="New unread message"
-                          />
-                        )}
+                return (
+                  <div
+                    key={convId}
+                    className={`conversation-item ${isActive ? 'active' : ''}`}
+                    onClick={() => handleSelectConv(convId)}
+                  >
+                    <div className="conv-avatar-wrapper">
+                      <img
+                        src={conv.participantAvatar}
+                        alt={conv.participantName}
+                        className="conv-avatar"
+                      />
+                      <div className="online-dot" />
+                    </div>
+                    <div className="conv-content">
+                      <div className="conv-top-row">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="conv-name">{conv.participantName}</span>
+                          {isUnread && (
+                            <span
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#10b981',
+                                boxShadow: '0 0 8px #10b981',
+                                display: 'inline-block',
+                              }}
+                              title="New unread message"
+                            />
+                          )}
+                        </div>
+                        <span className="conv-time">
+                          {conv.messages && conv.messages.length > 0
+                            ? conv.messages[conv.messages.length - 1]?.timestamp || ''
+                            : conv.lastMessageTime || ''}
+                        </span>
                       </div>
-                      <span className="conv-time">
+                      <span className="conv-item-chip">{conv.itemTitle}</span>
+                      <div className="conv-snippet" style={{ fontWeight: isUnread ? 700 : 400 }}>
                         {conv.messages && conv.messages.length > 0
-                          ? conv.messages[conv.messages.length - 1]?.timestamp || ''
-                          : conv.lastMessageTime || ''}
-                      </span>
-                    </div>
-                    <span className="conv-item-chip">{conv.itemTitle}</span>
-                    <div className="conv-snippet" style={{ fontWeight: isUnread ? 700 : 400 }}>
-                      {conv.messages && conv.messages.length > 0
-                        ? conv.messages[conv.messages.length - 1]?.text
-                        : conv.lastMessage || 'No messages yet.'}
+                          ? conv.messages[conv.messages.length - 1]?.text
+                          : conv.lastMessage || 'No messages yet.'}
+                      </div>
                     </div>
                   </div>
+                );
+              })
+            ) : (
+              <div
+                style={{
+                  padding: '36px 20px',
+                  textAlign: 'center',
+                  color: 'var(--color-text-muted)',
+                  fontSize: '13px',
+                  lineHeight: 1.6,
+                }}
+              >
+                <MessageSquare size={32} style={{ opacity: 0.5, marginBottom: '8px' }} />
+                <div>No active messages yet.</div>
+                <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>
+                  Click <strong>"Message Owner"</strong> or <strong>"Message Finder"</strong> on any item post to start a conversation!
                 </div>
-              );
-            })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -232,14 +250,20 @@ export const MessagesPage = () => {
             className="chat-main"
             style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               padding: '40px',
               textAlign: 'center',
               color: 'var(--color-text-muted)',
+              gap: '12px',
             }}
           >
-            Select a conversation to view messages.
+            <MessageSquare size={48} style={{ opacity: 0.4 }} />
+            <div style={{ fontSize: '16px', fontWeight: 600 }}>Your Inbox is Empty</div>
+            <div style={{ fontSize: '13px', maxWidth: '320px', lineHeight: 1.5 }}>
+              Browse lost & found items and click <strong>Message</strong> to contact other students directly.
+            </div>
           </div>
         )}
       </div>

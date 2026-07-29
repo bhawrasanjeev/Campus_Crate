@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { CURRENT_USER } from '../data/mockData';
 import { ShieldCheck, Lock, Mail, User, Building, AlertCircle, KeyRound, CheckCircle } from 'lucide-react';
 import './LoginPage.css';
 
@@ -135,22 +134,6 @@ export const LoginPage = () => {
     if (res.success) {
       setOtpNotice('A new OTP code has been sent to your email.');
     }
-  };
-
-  const handleSignInAsStudent = () => {
-    setCurrentUser(CURRENT_USER);
-    navigate('/lost');
-  };
-
-  const handleSignInAsAdmin = () => {
-    setCurrentUser({
-      id: 'admin_1',
-      name: 'Admin Security',
-      email: 'security@college.edu',
-      role: 'admin',
-      avatar: '/user-avatar.svg',
-    });
-    navigate('/admin');
   };
 
   return (
@@ -391,24 +374,6 @@ export const LoginPage = () => {
               <div className="verification-badge">
                 <ShieldCheck size={16} />
                 Nodemailer Email OTP Verification Enabled
-              </div>
-
-              <div className="demo-switcher-box">
-                <span className="demo-label">Quick Demo Switcher</span>
-                <div className="demo-btn-group">
-                  <button
-                    className={`demo-user-btn ${currentUser?.role === 'student' ? 'active' : ''}`}
-                    onClick={handleSignInAsStudent}
-                  >
-                    Student View
-                  </button>
-                  <button
-                    className={`demo-user-btn ${currentUser?.role === 'admin' ? 'active' : ''}`}
-                    onClick={handleSignInAsAdmin}
-                  >
-                    Admin Portal View
-                  </button>
-                </div>
               </div>
             </>
           )}

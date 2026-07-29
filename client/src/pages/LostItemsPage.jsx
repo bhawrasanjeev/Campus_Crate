@@ -101,33 +101,49 @@ export const LostItemsPage = ({ onOpenDetails }) => {
       </div>
 
       {filteredItems.length === 0 ? (
-        <div className="empty-state">
-          <PackageX size={48} color="var(--color-text-muted)" style={{ margin: '0 auto' }} />
-          <h3 className="empty-title">No lost items match your search</h3>
-          <p className="empty-desc">
-            Try adjusting your search terms or filters above.
+        <div className="empty-state" style={{ padding: '60px 20px', textAlign: 'center' }}>
+          <PackageX size={56} color="var(--color-text-muted)" style={{ margin: '0 auto 12px' }} />
+          <h3 className="empty-title" style={{ fontSize: '18px', fontWeight: 700 }}>No lost items found</h3>
+          <p className="empty-desc" style={{ color: 'var(--color-text-muted)', marginTop: '6px' }}>
+            There are currently no lost item reports matching your filters. Be the first to report a lost item!
           </p>
+          <button
+            type="button"
+            onClick={handleReportLostClick}
+            style={{
+              marginTop: '16px',
+              padding: '10px 20px',
+              borderRadius: '9999px',
+              backgroundColor: 'var(--color-primary)',
+              color: '#fff',
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            + Report Lost Item
+          </button>
         </div>
       ) : (
-        <div className="items-grid">
-          {filteredItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              onSelect={onOpenDetails}
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="items-grid">
+            {filteredItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onSelect={onOpenDetails}
+              />
+            ))}
+          </div>
 
-      <div className="pagination">
-        <button className="page-btn active">1</button>
-        <button className="page-btn">2</button>
-        <button className="page-btn">3</button>
-        <button className="page-btn" title="Next Page">
-          <ChevronRight size={18} />
-        </button>
-      </div>
+          <div className="pagination">
+            <button className="page-btn active">1</button>
+            <button className="page-btn" title="Next Page">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

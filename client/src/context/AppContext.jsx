@@ -8,7 +8,7 @@ import {
 } from '../data/mockData';
 
 const AppContext = createContext(null);
-const API_SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5050').replace(/\/$/, '');
+const API_SERVER_URL = (import.meta.env.VITE_API_URL || 'https://campuscrate-em9z.onrender.com').replace(/\/$/, '');
 const API_BASE_URL = `${API_SERVER_URL}/api`;
 
 export const AppProvider = ({ children }) => {
@@ -76,10 +76,7 @@ export const AppProvider = ({ children }) => {
           date: typeof it.date === 'string' ? it.date : new Date(it.date).toLocaleDateString(),
         }));
 
-        const existingApiIds = new Set(formattedApiItems.map((i) => i.id));
-        const nonDuplicateDefaults = DEFAULT_ITEMS.filter((def) => !existingApiIds.has(def.id));
-        
-        setItems([...formattedApiItems, ...nonDuplicateDefaults]);
+        setItems(formattedApiItems);
       }
     } catch (err) {
       console.warn('API fetchItems warning (using local state):', err.message);
@@ -191,7 +188,7 @@ export const AppProvider = ({ children }) => {
       });
       if (!response.ok) return;
       const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         const formattedConvs = data.map((conv) => {
           const otherParticipant = conv.participants?.find(
             (p) => p._id !== currentUser._id && p.id !== currentUser._id
@@ -202,9 +199,7 @@ export const AppProvider = ({ children }) => {
             _id: conv._id,
             targetUserId: otherParticipant?._id,
             participantName: otherParticipant?.name || 'Campus Student',
-            participantAvatar:
-              otherParticipant?.avatar ||
-              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+            participantAvatar: otherParticipant?.avatar || '/user-avatar.svg',
             online: true,
             itemTitle: conv.item?.title || 'Item Inquiry',
             itemLocation: conv.item?.location || 'Main Campus',
@@ -216,9 +211,13 @@ export const AppProvider = ({ children }) => {
 
         setConversations(formattedConvs);
         
-        const currentActive = formattedConvs.find((c) => c.id === activeConversationId || c._id === activeConversationId) || formattedConvs[0];
-        setActiveConversationId(currentActive.id);
-        fetchMessagesForConv(currentActive.id);
+        if (formattedConvs.length > 0) {
+          const currentActive = formattedConvs.find((c) => c.id === activeConversationId || c._id === activeConversationId) || formattedConvs[0];
+          setActiveConversationId(currentActive.id);
+          fetchMessagesForConv(currentActive.id);
+        } else {
+          setActiveConversationId(null);
+        }
       }
     } catch (err) {
       console.warn('API fetchConversations warning:', err.message);
