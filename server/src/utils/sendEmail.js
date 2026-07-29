@@ -13,7 +13,10 @@ const sendEmail = async ({ to, subject, html, text }) => {
                 auth: {
                     user: user,
                     pass: pass
-                }
+                },
+                connectionTimeout: 5000,
+                greetingTimeout: 5000,
+                socketTimeout: 5000
             });
         } else {
             console.warn("⚠️ Nodemailer EMAIL_USER or EMAIL_PASS missing in server/.env");
@@ -25,7 +28,10 @@ const sendEmail = async ({ to, subject, html, text }) => {
                 auth: {
                     user: testAccount.user,
                     pass: testAccount.pass
-                }
+                },
+                connectionTimeout: 5000,
+                greetingTimeout: 5000,
+                socketTimeout: 5000
             });
         }
 
@@ -41,7 +47,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
         console.log(`✉️ Nodemailer Real Gmail Email Sent to ${to}. Message ID: ${info.messageId}`);
         return info;
     } catch (error) {
-        console.error("❌ Nodemailer Send Email Failed Error:", error.message);
+        console.error("❌ Nodemailer Send Email Error:", error.message);
         return null;
     }
 };

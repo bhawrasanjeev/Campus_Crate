@@ -62,7 +62,8 @@ const registerUser = async (req, res) => {
 
         console.log(`🔑 [NODEMAILER OTP CODE]: ${otpCode} for ${lowerEmail}`);
 
-        await sendEmail({
+        // Dispatch Email in background (non-blocking so API responds in <100ms)
+        sendEmail({
             to: lowerEmail,
             subject: "CampusCrate - Your 6-Digit Verification OTP",
             html: `
@@ -78,7 +79,7 @@ const registerUser = async (req, res) => {
                     <p style="font-size: 12px; color: #94a3b8; text-align: center;">This code will expire in 10 minutes. Please do not share this OTP with anyone.</p>
                 </div>
             `
-        });
+        }).catch(err => console.error("Background SendEmail Error:", err.message));
 
         res.status(200).json({
             message: "Registration successful. Please enter the 6-digit OTP sent to your email.",
@@ -117,7 +118,7 @@ const sendOtp = async (req, res) => {
 
         console.log(`🔑 [NODEMAILER OTP CODE]: ${otpCode} for ${lowerEmail}`);
 
-        await sendEmail({
+        sendEmail({
             to: lowerEmail,
             subject: "CampusCrate - Your OTP Security Code",
             html: `
@@ -131,7 +132,7 @@ const sendOtp = async (req, res) => {
                     </div>
                 </div>
             `
-        });
+        }).catch(err => console.error("Background SendEmail Error:", err.message));
 
         res.json({
             message: "OTP sent successfully to your email.",
