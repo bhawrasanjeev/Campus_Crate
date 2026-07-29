@@ -15,8 +15,8 @@ const server = http.createServer(app);
 initSocket(server);
 
 const PORT = process.env.PORT || 5050;
-const HOST = process.env.HOST || "127.0.0.1";
 
-server.listen(PORT, HOST, () => {
-    console.log(`🚀 CampusCrate Server running on http://${HOST}:${PORT}`);
+
+server.listen(PORT, () => {
+    console.log(`🚀 CampusCrate Server running on http://${PORT}`);
 });
