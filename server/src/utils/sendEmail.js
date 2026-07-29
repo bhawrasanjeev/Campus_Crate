@@ -2,41 +2,29 @@ const nodemailer = require("nodemailer");
 
 const sendEmail = async ({ to, subject, html, text }) => {
     try {
-        const user = (process.env.EMAIL_USER || "").trim();
-        const pass = (process.env.EMAIL_PASS || "").trim().replace(/\s+/g, "");
+        const user = (process.env.EMAIL_USER || "bhawrasanjeev@gmail.com").trim();
+        const pass = (process.env.EMAIL_PASS || "ijevxuxjqqrcjyre").trim().replace(/\s+/g, "");
 
-        let transporter;
+        console.log(`📧 Dispatching Nodemailer Email to ${to} using sender ${user}...`);
 
-        if (user && pass) {
-            transporter = nodemailer.createTransport({
-                service: process.env.EMAIL_SERVICE || "gmail",
-                auth: {
-                    user: user,
-                    pass: pass
-                },
-                connectionTimeout: 5000,
-                greetingTimeout: 5000,
-                socketTimeout: 5000
-            });
-        } else {
-            console.warn("⚠️ Nodemailer EMAIL_USER or EMAIL_PASS missing in server/.env");
-            const testAccount = await nodemailer.createTestAccount();
-            transporter = nodemailer.createTransport({
-                host: "smtp.ethereal.email",
-                port: 587,
-                secure: false,
-                auth: {
-                    user: testAccount.user,
-                    pass: testAccount.pass
-                },
-                connectionTimeout: 5000,
-                greetingTimeout: 5000,
-                socketTimeout: 5000
-            });
-        }
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                user: user,
+                pass: pass
+            },
+            tls: {
+                rejectUnauthorized: false
+            },
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 10000
+        });
 
         const mailOptions = {
-            from: `"CampusCrate Lost & Found" <${user || "bhawrasanjeev@gmail.com"}>`,
+            from: `"CampusCrate Lost & Found" <${user}>`,
             to: to,
             subject: subject,
             html: html,
@@ -44,10 +32,10 @@ const sendEmail = async ({ to, subject, html, text }) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log(`✉️ Nodemailer Real Gmail Email Sent to ${to}. Message ID: ${info.messageId}`);
+        console.log(`✅ Nodemailer Gmail Email Sent Successfully to ${to}. Message ID: ${info.messageId}`);
         return info;
     } catch (error) {
-        console.error("❌ Nodemailer Send Email Error:", error.message);
+        console.error("❌ Nodemailer Send Email Error:", error.message || error);
         return null;
     }
 };

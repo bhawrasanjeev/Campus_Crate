@@ -262,7 +262,7 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Responsive Navbar Media Queries */
+/* Responsive Navbar & General Media Queries */
 @media (max-width: 1024px) {
   .navbar-search-box {
     width: 170px;
@@ -275,6 +275,18 @@ a {
   }
   .mobile-toggle-btn {
     display: flex !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar-content-container {
+    padding: 0 12px;
+  }
+  .navbar-search-box {
+    display: none;
+  }
+  .navbar-logo span {
+    font-size: 17px;
   }
 }
 

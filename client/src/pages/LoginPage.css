@@ -80,6 +80,21 @@
   text-align: center;
 }
 
+@media (max-width: 480px) {
+  .login-page-container {
+    padding: 16px 12px;
+  }
+  .login-left-banner {
+    padding: 28px 20px;
+  }
+  .banner-heading {
+    font-size: 24px;
+  }
+  .login-right-content {
+    padding: 24px 16px;
+  }
+}
+
 .auth-tab-group {
   display: flex;
   background-color: var(--color-bg);
@@ -270,45 +285,4 @@
   border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 600;
-}
-
-.demo-switcher-box {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
-  width: 100%;
-}
-
-.demo-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-  display: block;
-}
-
-.demo-btn-group {
-  display: flex;
-  gap: 8px;
-}
-
-.demo-user-btn {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.demo-user-btn.active {
-  background-color: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
 }
