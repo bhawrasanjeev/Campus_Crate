@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES } from '../data/mockData';
 import {
-  AlertTriangle,
   Upload,
+  Search,
+  Gift,
   MapPin,
   Calendar,
-  Shield,
+  AlertTriangle,
   Lightbulb,
   CheckCircle,
   Phone,
@@ -14,19 +16,20 @@ import {
 import './ReportItemPage.css';
 
 const PRESET_PHOTOS = [
-  { label: 'Bottle', url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80' },
-  { label: 'Keys', url: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=600&auto=format&fit=crop&q=80' },
-  { label: 'MacBook', url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80' },
-  { label: 'Backpack', url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80' },
-  { label: 'Wallet', url: 'https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&auto=format&fit=crop&q=80' },
+  { label: 'Laptop', url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&auto=format&fit=crop&q=80' },
+  { label: 'Backpack', url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&auto=format&fit=crop&q=80' },
+  { label: 'Water Bottle', url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&auto=format&fit=crop&q=80' },
+  { label: 'Headphones', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80' },
 ];
 
 export const ReportItemPage = ({ onOpenDetails }) => {
-  const { addItem, setCurrentPage, currentUser, reportInitialType, items } = useApp();
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const { addItem, currentUser, reportInitialType, items } = useApp();
 
-  const [reportType, setReportType] = useState(reportInitialType);
+  const [reportType, setReportType] = useState(reportInitialType || 'lost');
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Water Bottle');
+  const [category, setCategory] = useState('Electronics');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState(['blue', 'campus']);
   const [description, setDescription] = useState('');
@@ -34,9 +37,9 @@ export const ReportItemPage = ({ onOpenDetails }) => {
   const [date, setDate] = useState('Today, 10:30 AM');
   const [time, setTime] = useState('10:30 AM');
   const [imageUrl, setImageUrl] = useState('');
-  const [verificationQuestion, setVerificationQuestion] = useState('');
-  const [contactPhone, setContactPhone] = useState('+1 (555) 234-5678');
+  const [contactPhone, setContactPhone] = useState('+91 98765 43210');
   const [submitted, setSubmitted] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   const potentialMatches = items.filter(
     (it) => it.type !== reportType && it.status === 'active'
@@ -56,6 +59,42 @@ export const ReportItemPage = ({ onOpenDetails }) => {
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
+  // Local File Upload Handler
+  const processSelectedFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImageUrl(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileInputChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    processSelectedFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim() || !location.trim()) return;
@@ -70,22 +109,22 @@ export const ReportItemPage = ({ onOpenDetails }) => {
       date: date || 'Today',
       time: time || 'Just now',
       imageUrl: imageUrl.trim(),
-      verificationQuestion: verificationQuestion.trim() || 'Describe a unique feature or mark on this item.',
-      contactPhone: contactPhone.trim() || '+1 (555) 911-0022',
-      reporterName: currentUser?.name || 'Anonymous Student',
-      reporterAvatar: currentUser?.avatar,
+      contactPhone: contactPhone.trim() || '+91 98123 45678',
+      reporterName: currentUser?.name || 'Sanjeev Bhawra',
+      reporterAvatar: currentUser?.avatar || '/user-avatar.svg',
       reporterRole: currentUser?.role === 'admin' ? 'Campus Admin' : 'Student',
     });
 
     setSubmitted(true);
     setTimeout(() => {
-      setCurrentPage(reportType === 'lost' ? 'lost' : 'found');
+      navigate(reportType === 'lost' ? '/lost' : '/found');
     }, 1500);
   };
 
   return (
     <div className="page-container">
-      <div className="page-header">
+      {/* Header & Toggle */}
+      <div className="page-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div className="page-title-group">
           <h1 className="page-title">
             {reportType === 'lost' ? 'Report Lost Item' : 'Report Found Item'}
@@ -101,18 +140,19 @@ export const ReportItemPage = ({ onOpenDetails }) => {
             className={`toggle-btn ${reportType === 'lost' ? 'active' : ''}`}
             onClick={() => setReportType('lost')}
           >
-            I Lost Something
+            <Search size={15} style={{ marginRight: '6px' }} /> I Lost Something
           </button>
           <button
             type="button"
             className={`toggle-btn ${reportType === 'found' ? 'active' : ''}`}
             onClick={() => setReportType('found')}
           >
-            I Found Something
+            <Gift size={15} style={{ marginRight: '6px' }} /> I Found Something
           </button>
         </div>
       </div>
 
+      {/* Match Alert */}
       {potentialMatches.length > 0 && (
         <div className="match-alert-box">
           <div className="match-alert-header">
@@ -128,7 +168,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
               <div
                 key={m.id}
                 className="match-card-mini"
-                onClick={() => onOpenDetails(m)}
+                onClick={() => onOpenDetails && onOpenDetails(m)}
               >
                 {m.imageUrl && (
                   <img src={m.imageUrl} alt={m.title} className="match-thumb" />
@@ -148,7 +188,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
           className="form-card-section"
           style={{ textAlign: 'center', padding: '60px 24px' }}
         >
-          <CheckCircle size={64} color="#3bb273" style={{ margin: '0 auto' }} />
+          <CheckCircle size={64} color="#10b981" style={{ margin: '0 auto' }} />
           <h2
             style={{
               fontFamily: 'var(--font-heading)',
@@ -166,25 +206,26 @@ export const ReportItemPage = ({ onOpenDetails }) => {
         <form onSubmit={handleSubmit}>
           <div className="report-page-layout">
             <div className="left-form-column">
-              {/* Section 1: Basic Details */}
+              
+              {/* SECTION 1: ITEM INFORMATION */}
               <div className="form-card-section">
-                <h2 className="section-heading">Basic Details</h2>
+                <h2 className="section-number-title">1. Item Information</h2>
 
-                <div className="form-group" style={{ marginBottom: '16px' }}>
+                <div className="form-group" style={{ marginBottom: '18px' }}>
                   <label className="form-label">
                     Item Name <span className="required-star">*</span>
                   </label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. Blue Hydroflask Bottle, Set of Keys"
+                    placeholder="e.g. Blue Hydroflask Bottle"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
                   />
                 </div>
 
-                <div className="form-grid-2">
+                <div className="form-grid-2" style={{ marginBottom: '18px' }}>
                   <div className="form-group">
                     <label className="form-label">
                       Category <span className="required-star">*</span>
@@ -216,14 +257,14 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                 </div>
 
                 {tags.length > 0 && (
-                  <div className="tags-list" style={{ marginTop: '12px' }}>
+                  <div className="tags-list" style={{ marginBottom: '18px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {tags.map((tag) => (
-                      <span key={tag} className="tag-chip">
-                        #{tag}{' '}
+                      <span key={tag} className="tag-chip" style={{ padding: '5px 12px', borderRadius: '9999px', backgroundColor: 'var(--color-surface-dim)', fontSize: '13px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        #{tag}
                         <button
                           type="button"
                           onClick={() => handleRemoveTag(tag)}
-                          style={{ marginLeft: '4px', cursor: 'pointer' }}
+                          style={{ cursor: 'pointer', border: 'none', background: 'transparent', fontWeight: 700, fontSize: '14px', color: 'var(--color-text-muted)' }}
                         >
                           ×
                         </button>
@@ -231,11 +272,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                     ))}
                   </div>
                 )}
-              </div>
 
-              {/* Section 2: Detailed Description */}
-              <div className="form-card-section">
-                <h2 className="section-heading">Description</h2>
                 <div className="form-group">
                   <label className="form-label">Detailed Description</label>
                   <textarea
@@ -248,10 +285,11 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                 </div>
               </div>
 
-              {/* Section 3: When & Where */}
+              {/* SECTION 2: EVENT & CONTACT DETAILS */}
               <div className="form-card-section">
-                <h2 className="section-heading">When & Where</h2>
-                <div className="form-grid-2">
+                <h2 className="section-number-title">2. Event & Contact Details</h2>
+
+                <div className="form-grid-2" style={{ marginBottom: '18px' }}>
                   <div className="form-group">
                     <label className="form-label">
                       {reportType === 'lost' ? 'Date Lost' : 'Date Found'}{' '}
@@ -260,7 +298,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Today, 10:30 AM"
+                      placeholder="Today, 10:30 AM"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       required
@@ -272,111 +310,150 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Around 2:00 PM"
+                      placeholder="10:30 AM"
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="form-group" style={{ marginTop: '16px' }}>
+                <div className="form-group" style={{ marginBottom: '18px' }}>
                   <label className="form-label">
                     Last Known Location <span className="required-star">*</span>
                   </label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. Main Library 2nd floor, Student Union cafeteria"
+                    placeholder="e.g. Main Library 2nd floor"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     required
                   />
                 </div>
-              </div>
 
-              {/* Section 4: Reference Photo */}
-              <div className="form-card-section">
-                <h2 className="section-heading">Reference Photo</h2>
-                <div className="form-group">
-                  <label className="form-label">Image URL or Pick Sample</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Paste image link URL (e.g. https://...)"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                  />
-                </div>
-
-                <div className="preset-photos-row">
-                  <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                    Quick presets:
-                  </span>
-                  {PRESET_PHOTOS.map((p) => (
-                    <img
-                      key={p.label}
-                      src={p.url}
-                      alt={p.label}
-                      className={`preset-photo-thumb ${
-                        imageUrl === p.url ? 'selected' : ''
-                      }`}
-                      onClick={() => setImageUrl(p.url)}
-                      title={p.label}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Section 5: Contact Information */}
-              <div className="form-card-section">
-                <h2 className="section-heading">
-                  <Phone size={20} /> Contact Phone Number
-                </h2>
                 <div className="form-group">
                   <label className="form-label">
-                    Finder / Reporter Contact Phone Number <span className="required-star">*</span>
+                    Contact Phone Number <span className="required-star">*</span>
                   </label>
                   <input
                     type="tel"
                     className="form-input"
-                    placeholder="e.g. +1 (555) 234-5678"
+                    placeholder="+91 98765 43210"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     required
                   />
-                  <span className="form-help">
+                  <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '6px', display: 'block', lineHeight: 1.5 }}>
                     This phone number will be displayed to students who lost or found items so they can contact you directly.
                   </span>
                 </div>
               </div>
 
-              {/* Section 6: Security Question */}
+              {/* SECTION 3: REFERENCE PHOTO */}
               <div className="form-card-section">
-                <h2 className="section-heading">
-                  <Shield size={20} /> Security Verification Detail
-                </h2>
-                <div className="form-group">
-                  <label className="form-label">
-                    Verification Question for Claimants
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. What specific sticker is on the bottom base?"
-                    value={verificationQuestion}
-                    onChange={(e) => setVerificationQuestion(e.target.value)}
-                  />
-                  <span className="form-help">
-                    Claimants will be asked this question before receiving your contact info or item pickup.
-                  </span>
+                <h2 className="section-number-title">3. Reference Photo</h2>
+
+                <div className="photo-section-grid">
+                  {/* Left: Local File Upload Dropzone */}
+                  <div>
+                    <label className="form-label">Upload Local Image File</label>
+                    
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileInputChange}
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                    />
+
+                    <div
+                      className={`image-upload-dropzone ${dragActive ? 'drag-active' : ''}`}
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      {imageUrl && imageUrl.startsWith('data:image/') ? (
+                        <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <img
+                            src={imageUrl}
+                            alt="Uploaded preview"
+                            style={{ width: '120px', height: '90px', borderRadius: '8px', objectFit: 'cover', marginBottom: '8px' }}
+                          />
+                          <span className="upload-title" style={{ color: '#10b981' }}>Photo Selected!</span>
+                          <button
+                            type="button"
+                            onClick={(evt) => {
+                              evt.stopPropagation();
+                              setImageUrl('');
+                            }}
+                            style={{
+                              marginTop: '6px',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: '#fee2e2',
+                              color: '#ef4444',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                            }}
+                          >
+                            Remove Photo
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="upload-icon-circle">
+                            <Upload size={22} />
+                          </div>
+                          <div className="upload-title">Click to upload file</div>
+                          <div className="upload-subtitle">PNG, JPG, WebP up to 5MB</div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: Paste Image URL & Presets */}
+                  <div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label className="form-label">Or Paste Image URL</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Paste image link URL (e.g. https://...)"
+                        value={imageUrl.startsWith('data:image/') ? '' : imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <span className="form-label" style={{ fontSize: '13px', display: 'block' }}>
+                        Presets:
+                      </span>
+                      <div className="preset-photos-row">
+                        {PRESET_PHOTOS.map((p) => (
+                          <img
+                            key={p.label}
+                            src={p.url}
+                            alt={p.label}
+                            className={`preset-photo-thumb ${
+                              imageUrl === p.url ? 'selected' : ''
+                            }`}
+                            onClick={() => setImageUrl(p.url)}
+                            title={p.label}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              {/* Form Actions */}
               <div className="form-actions-bar">
                 <button
                   type="button"
                   className="btn-cancel"
-                  onClick={() => setCurrentPage(reportType)}
+                  onClick={() => navigate(reportType === 'lost' ? '/lost' : '/found')}
                 >
                   Cancel
                 </button>
@@ -428,7 +505,7 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                       borderRadius: 'var(--radius-pill)',
                     }}
                   >
-                    Updates in real-time
+                    Real-time
                   </span>
                 </div>
 
@@ -462,6 +539,10 @@ export const ReportItemPage = ({ onOpenDetails }) => {
                         <Calendar size={14} />
                         <span>{date || 'Date specified here'}</span>
                       </div>
+                      <div className="meta-row contact-phone-row" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
+                        <Phone size={14} />
+                        <span>Contact: {contactPhone || '+91 98765 43210'}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -470,13 +551,12 @@ export const ReportItemPage = ({ onOpenDetails }) => {
               <div className="tips-box">
                 <div className="tips-title">
                   <Lightbulb size={18} color="var(--color-amber)" />
-                  Tips for a good post
+                  Posting Guidelines
                 </div>
                 <ul className="tips-list">
-                  <li>Be specific about the location where it was lost or found.</li>
-                  <li>Do NOT reveal unique verification answers in the public description!</li>
-                  <li>Upload a photo or choose a preset thumbnail to increase responses.</li>
-                  <li>Keep notifications enabled to respond to claimant messages promptly.</li>
+                  <li>Specify the exact campus location (building, room, landmark).</li>
+                  <li>Mention unique features like stickers, brand marks, or scratches.</li>
+                  <li>Direct messaging will open as soon as another student clicks Message.</li>
                 </ul>
               </div>
             </div>

@@ -14,8 +14,9 @@ const server = http.createServer(app);
 // Initialize Socket.io for Real-time Chat
 initSocket(server);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
+const HOST = process.env.HOST || "127.0.0.1";
 
-server.listen(PORT, () => {
-    console.log(`🚀 CampusCrate Server running on port ${PORT}`);
+server.listen(PORT, HOST, () => {
+    console.log(`🚀 CampusCrate Server running on http://${HOST}:${PORT}`);
 });

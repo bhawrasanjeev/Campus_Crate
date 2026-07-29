@@ -1,10 +1,44 @@
 import React from 'react';
-import { X, MapPin, Calendar, Tag, Info, Phone } from 'lucide-react';
+import { X, MapPin, Calendar, Tag, Info, Phone, MessageSquare, CheckCircle2, Trash2, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
-export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
-  const { startChatWithUser } = useApp();
+export const ItemDetailsModal = ({ item, onClose }) => {
+  const navigate = useNavigate();
+  const { startChatWithUser, currentUser, markItemAsClaimed, deleteItemPost } = useApp();
   if (!item) return null;
+
+  const isLost = item.type === 'lost';
+  const isClaimed = item.status === 'claimed' || item.status === 'resolved';
+  const posterName = item.reporterName || item.postedBy?.name || (isLost ? 'Item Owner' : 'Item Finder');
+  const phone = item.contactPhone || (isLost ? '+91 98765 43210' : '+91 98123 45678');
+
+  const currentUserId = currentUser?._id || currentUser?.id;
+  const posterId = typeof item.postedBy === 'object' ? (item.postedBy?._id || item.postedBy?.id) : item.postedBy;
+  
+  const isOwner = Boolean(
+    (currentUserId && posterId && String(currentUserId) === String(posterId)) ||
+    (currentUser?.name && item.reporterName && currentUser.name.trim().toLowerCase() === item.reporterName.trim().toLowerCase())
+  );
+
+  const handleStartChat = () => {
+    const ownerId = typeof item.postedBy === 'object' ? item.postedBy?._id : item.postedBy;
+    const itemId = item._id || item.id;
+    startChatWithUser(posterName, item.title, item.reporterAvatar || '/user-avatar.svg', ownerId, itemId);
+    onClose();
+    navigate('/messages');
+  };
+
+  const handleMarkClaimed = () => {
+    markItemAsClaimed(item.id || item._id);
+  };
+
+  const handleDeletePost = () => {
+    if (window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
+      deleteItemPost(item.id || item._id);
+      onClose();
+    }
+  };
 
   return (
     <div
@@ -55,11 +89,27 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
         </button>
 
         <div style={{ display: 'grid', gap: '24px' }}>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
-              <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'var(--color-primary)' }}>
-                {item.title}
-              </h2>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '280px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                  {item.title}
+                </h2>
+                {isClaimed && (
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      backgroundColor: '#10b981',
+                      color: '#ffffff',
+                      padding: '3px 10px',
+                      borderRadius: '9999px',
+                    }}
+                  >
+                    CLAIMED
+                  </span>
+                )}
+              </div>
               <p style={{ marginTop: '10px', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
                 {item.description || 'No detailed description available.'}
               </p>
@@ -73,10 +123,12 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
                   <Calendar size={16} />
                   <span>{item.date}</span>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <Phone size={16} />
-                  <span>{item.contactPhone || 'No contact phone available'}</span>
-                </div>
+                {!isOwner && (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', color: 'var(--color-primary)', fontWeight: 600 }}>
+                    <Phone size={16} />
+                    <span>Contact: {phone}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -163,26 +215,103 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
           )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => {
-                startChatWithUser(item.reportedBy || item.reporterName || 'Item Poster', item.title, item.reporterAvatar);
-                onClose();
-              }}
-              style={{
-                padding: '12px 18px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--color-primary)',
-                color: '#fff',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-              }}
-            >
-              💬 Message Owner
-            </button>
+            {isOwner ? (
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {isClaimed ? (
+                  <div
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '12px',
+                      backgroundColor: '#d1fae5',
+                      color: '#065f46',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <Check size={16} /> Item Claimed
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleMarkClaimed}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '12px',
+                      backgroundColor: '#10b981',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      border: 'none',
+                    }}
+                  >
+                    <CheckCircle2 size={16} /> Mark as Claimed
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleDeletePost}
+                  style={{
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    backgroundColor: 'var(--color-lost-bg)',
+                    color: 'var(--color-lost)',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    border: 'none',
+                  }}
+                >
+                  <Trash2 size={16} /> Delete Post
+                </button>
+              </div>
+            ) : (
+              <>
+                <a
+                  href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
+                  style={{
+                    padding: '12px 18px',
+                    borderRadius: '12px',
+                    backgroundColor: 'var(--color-primary-bg)',
+                    color: 'var(--color-primary)',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Phone size={16} /> Call {phone}
+                </a>
+
+                <button
+                  type="button"
+                  onClick={handleStartChat}
+                  style={{
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    backgroundColor: 'var(--color-primary)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    border: 'none',
+                  }}
+                >
+                  <MessageSquare size={16} /> {isLost ? 'Message Owner' : 'Message Finder'}
+                </button>
+              </>
+            )}
+
             <button
               type="button"
               onClick={onClose}
@@ -193,29 +322,11 @@ export const ItemDetailsModal = ({ item, onClose, onOpenClaim }) => {
                 color: 'var(--color-text-secondary)',
                 fontWeight: 700,
                 cursor: 'pointer',
+                border: 'none',
               }}
             >
               Close
             </button>
-            {item.type === 'lost' && (
-              <button
-                type="button"
-                onClick={() => {
-                  onOpenClaim(item);
-                  onClose();
-                }}
-                style={{
-                  padding: '12px 18px',
-                  borderRadius: '12px',
-                  backgroundColor: 'var(--color-found)',
-                  color: '#fff',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                I Found This
-              </button>
-            )}
           </div>
         </div>
       </div>

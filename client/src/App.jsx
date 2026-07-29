@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { ShieldAlert } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { ClaimModal } from './components/ClaimModal';
 import { ItemDetailsModal } from './components/ItemDetailsModal';
 import { LostItemsPage } from './pages/LostItemsPage';
 import { FoundItemsPage } from './pages/FoundItemsPage';
@@ -12,14 +13,73 @@ import { MyPostsPage } from './pages/MyPostsPage';
 import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from './pages/LoginPage';
 
+// Protected Route Guard for Admin Portal
+const ProtectedAdminRoute = ({ children }) => {
+  const { currentUser } = useApp();
+
+  if (!currentUser || currentUser.role !== 'admin') {
+    return (
+      <div className="page-container" style={{ textAlign: 'center', padding: '80px 20px' }}>
+        <div
+          style={{
+            maxWidth: '520px',
+            margin: '0 auto',
+            padding: '40px 30px',
+            backgroundColor: 'var(--color-surface)',
+            borderRadius: '24px',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
+          <ShieldAlert size={64} color="#ef4444" style={{ margin: '0 auto' }} />
+          <h2 style={{ fontSize: '24px', fontWeight: 800, marginTop: '20px', color: 'var(--color-text-main)' }}>
+            Access Restricted
+          </h2>
+          <p style={{ color: 'var(--color-text-muted)', marginTop: '10px', lineHeight: 1.6 }}>
+            The Admin Safety & Verification Portal is strictly reserved for campus administration officers and moderators.
+          </p>
+          <div style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <Link
+              to="/lost"
+              style={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                borderRadius: '9999px',
+                backgroundColor: 'var(--color-primary)',
+                color: '#fff',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Back to Campus Feed
+            </Link>
+            {!currentUser && (
+              <Link
+                to="/login"
+                style={{
+                  display: 'inline-block',
+                  padding: '12px 24px',
+                  borderRadius: '9999px',
+                  backgroundColor: 'var(--color-surface-dim)',
+                  color: 'var(--color-text-main)',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                Admin Login
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+};
+
 const MainContent = () => {
-  const {
-    currentPage,
-    selectedItemForClaim,
-    setSelectedItemForClaim,
-    selectedItemForDetails,
-    setSelectedItemForDetails,
-  } = useApp();
+  const [selectedItemForDetails, setSelectedItemForDetails] = useState(null);
 
   return (
     <div
@@ -33,55 +93,45 @@ const MainContent = () => {
       <Navbar />
 
       <main style={{ flex: 1 }}>
-        {currentPage === 'lost' && (
-          <LostItemsPage
-            onOpenClaim={(item) => setSelectedItemForClaim(item)}
-            onOpenDetails={(item) => setSelectedItemForDetails(item)}
+        <Routes>
+          <Route path="/" element={<Navigate to="/lost" replace />} />
+          <Route
+            path="/lost"
+            element={<LostItemsPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />}
           />
-        )}
-
-        {currentPage === 'found' && (
-          <FoundItemsPage
-            onOpenClaim={(item) => setSelectedItemForClaim(item)}
-            onOpenDetails={(item) => setSelectedItemForDetails(item)}
+          <Route
+            path="/found"
+            element={<FoundItemsPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />}
           />
-        )}
-
-        {currentPage === 'report' && (
-          <ReportItemPage
-            onOpenDetails={(item) => setSelectedItemForDetails(item)}
+          <Route
+            path="/report"
+            element={<ReportItemPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />}
           />
-        )}
-
-        {currentPage === 'messages' && <MessagesPage />}
-
-        {currentPage === 'my-posts' && (
-          <MyPostsPage
-            onOpenDetails={(item) => setSelectedItemForDetails(item)}
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route
+            path="/my-posts"
+            element={<MyPostsPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />}
           />
-        )}
-
-        {currentPage === 'admin' && <AdminPage />}
-
-        {currentPage === 'login' && <LoginPage />}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedAdminRoute>
+                <AdminPage />
+              </ProtectedAdminRoute>
+            }
+          />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="*" element={<Navigate to="/lost" replace />} />
+        </Routes>
       </main>
 
       <Footer />
-
-      {/* Claim Modal */}
-      {selectedItemForClaim && (
-        <ClaimModal
-          item={selectedItemForClaim}
-          onClose={() => setSelectedItemForClaim(null)}
-        />
-      )}
 
       {/* Item Details Modal */}
       {selectedItemForDetails && (
         <ItemDetailsModal
           item={selectedItemForDetails}
           onClose={() => setSelectedItemForDetails(null)}
-          onOpenClaim={(item) => setSelectedItemForClaim(item)}
         />
       )}
     </div>
@@ -91,7 +141,9 @@ const MainContent = () => {
 export default function App() {
   return (
     <AppProvider>
-      <MainContent />
+      <BrowserRouter>
+        <MainContent />
+      </BrowserRouter>
     </AppProvider>
   );
 }
