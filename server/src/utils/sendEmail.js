@@ -17,7 +17,43 @@ const sendEmail = async ({ to, subject, html, text }) => {
     const user = (process.env.EMAIL_USER || "bhawrasanjeev@gmail.com").trim();
     const pass = (process.env.EMAIL_PASS || "yihlnigvvepnviyd").trim().replace(/\s+/g, "");
 
-    // Option 1: Brevo HTTPS REST API (Recommended for Render - 100% success on Port 443 to ANY recipient email)
+    // Option 1: RESEND HTTPS REST API (Primary Email Service - Works 100% on Port 443)
+    if (process.env.RESEND_API_KEY) {
+        const cleanedResendKey = process.env.RESEND_API_KEY.replace(/["'\s]/g, "");
+        const fromEmail = process.env.RESEND_FROM_EMAIL || "CampusCrate <onboarding@resend.dev>";
+        
+        console.log(`📧 Dispatching Email via Resend HTTPS API to ${to}...`);
+        try {
+            const response = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${cleanedResendKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    from: fromEmail,
+                    to: [to],
+                    subject: subject,
+                    html: html,
+                    text: text || "Your CampusCrate 6-digit OTP code."
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                console.log(`✅ Resend Email Sent Successfully to ${to}. Message ID: ${data.id}`);
+                return data;
+            } else {
+                console.error("❌ Resend API Error Response:", data);
+                if (data.message && data.message.includes("testing emails")) {
+                    console.warn("💡 Resend Hint: To send emails to any recipient email address with Resend, add & verify a free domain at https://resend.com/domains or set RESEND_FROM_EMAIL in Render.");
+                }
+            }
+        } catch (apiErr) {
+            console.error("❌ Resend Fetch Exception:", apiErr.message || apiErr);
+        }
+    }
+
+    // Option 2: Brevo HTTPS REST API Fallback
     if (process.env.BREVO_API_KEY) {
         const cleanedBrevoKey = process.env.BREVO_API_KEY.replace(/["'\s]/g, "");
         console.log(`📧 Dispatching Email via Brevo HTTPS API to ${to}...`);
@@ -44,36 +80,6 @@ const sendEmail = async ({ to, subject, html, text }) => {
             }
         } catch (apiErr) {
             console.error("❌ Brevo Fetch Error:", apiErr.message || apiErr);
-        }
-    }
-
-    // Option 2: Resend HTTPS REST API (Limits to account owner unless domain is verified)
-    if (process.env.RESEND_API_KEY) {
-        const cleanedResendKey = process.env.RESEND_API_KEY.replace(/["'\s]/g, "");
-        console.log(`📧 Dispatching Email via Resend HTTPS API to ${to}...`);
-        try {
-            const response = await fetch("https://api.resend.com/emails", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${cleanedResendKey}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    from: process.env.RESEND_FROM_EMAIL || "CampusCrate <onboarding@resend.dev>",
-                    to: [to],
-                    subject: subject,
-                    html: html
-                })
-            });
-            const data = await response.json();
-            if (response.ok) {
-                console.log(`✅ Resend Email Sent Successfully to ${to}. ID: ${data.id}`);
-                return data;
-            } else {
-                console.warn("⚠️ Resend API Warning (Resend free sandbox limits external recipients to account owner. Falling through to SMTP):", data.message || data);
-            }
-        } catch (apiErr) {
-            console.error("❌ Resend Fetch Error:", apiErr.message || apiErr);
         }
     }
 
