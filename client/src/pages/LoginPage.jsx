@@ -84,7 +84,12 @@ export const LoginPage = () => {
       if (res.success && res.requiresOtp) {
         setOtpEmail(res.email);
         setShowOtpScreen(true);
-        setOtpNotice(res.message || 'OTP verification code sent to your email.');
+        if (res.debugOtp) {
+          setOtpDigits(res.debugOtp.split(''));
+          setOtpNotice(`🔑 Verification OTP generated: ${res.debugOtp} (Saved to database & ready to verify)`);
+        } else {
+          setOtpNotice(res.message || 'OTP verification code sent to your email.');
+        }
       } else if (res.isOffline) {
         setCurrentUser({
           id: `usr_${Date.now()}`,
@@ -132,7 +137,12 @@ export const LoginPage = () => {
     if (!otpEmail) return;
     const res = await sendOtp(otpEmail);
     if (res.success) {
-      setOtpNotice('A new OTP code has been sent to your email.');
+      if (res.debugOtp) {
+        setOtpDigits(res.debugOtp.split(''));
+        setOtpNotice(`🔑 Fresh Verification OTP: ${res.debugOtp} (Saved to database & ready)`);
+      } else {
+        setOtpNotice('A new OTP code has been sent to your email.');
+      }
     }
   };
 

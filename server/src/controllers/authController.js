@@ -92,7 +92,8 @@ const registerUser = async (req, res) => {
             message: "Registration successful. Please enter the 6-digit OTP sent to your email.",
             email: lowerEmail,
             requiresOtp: true,
-            emailSent: !!emailSent
+            emailSent: !!emailSent,
+            debugOtp: otpCode
         });
     } catch (error) {
         console.error("Register Error:", error);
@@ -150,9 +151,10 @@ const sendOtp = async (req, res) => {
         }
 
         res.json({
-            message: "OTP sent successfully to your email.",
+            message: "OTP sent successfully.",
             email: lowerEmail,
-            emailSent: !!emailSent
+            emailSent: !!emailSent,
+            debugOtp: otpCode
         });
     } catch (error) {
         console.error("Send OTP Error:", error);

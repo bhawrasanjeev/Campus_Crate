@@ -357,7 +357,7 @@ export const AppProvider = ({ children }) => {
         requiresOtp: true,
         email: data.email,
         message: data.message,
-        otpDemoHint: data.otpDemoHint,
+        debugOtp: data.debugOtp,
       };
     } catch (err) {
       const isOffline = err.name === 'TypeError' || err.message.includes('Failed to fetch');
@@ -386,7 +386,7 @@ export const AppProvider = ({ children }) => {
         throw new Error(data.message || 'Failed to send OTP');
       }
 
-      return { success: true, message: data.message, otpDemoHint: data.otpDemoHint };
+      return { success: true, message: data.message, debugOtp: data.debugOtp };
     } catch (err) {
       setAuthError(err.message);
       return { success: false, error: err.message };
