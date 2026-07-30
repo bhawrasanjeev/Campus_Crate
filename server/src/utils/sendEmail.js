@@ -17,7 +17,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
     const user = (process.env.EMAIL_USER || "bhawrasanjeev@gmail.com").trim();
     const pass = (process.env.EMAIL_PASS || "yihlnigvvepnviyd").trim().replace(/\s+/g, "");
 
-    // Option 1: Resend HTTPS REST API (Recommended for Render - 100% success on Port 443)
+    // Option 1: Resend HTTPS REST API
     if (process.env.RESEND_API_KEY) {
         console.log(`📧 Dispatching Email via Resend HTTPS API to ${to}...`);
         try {
@@ -39,7 +39,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
                 console.log(`✅ Resend Email Sent Successfully to ${to}. ID: ${data.id}`);
                 return data;
             } else {
-                console.error("❌ Resend API Error:", data);
+                console.warn("⚠️ Resend API Warning (Resend free sandbox limits external recipients to account owner. Falling through to SMTP):", data.message || data);
             }
         } catch (apiErr) {
             console.error("❌ Resend Fetch Error:", apiErr.message || apiErr);
