@@ -1,32 +1,40 @@
 const nodemailer = require("nodemailer");
 const dns = require("dns");
 
-// Force IPv4 first DNS lookup to prevent ENETUNREACH on cloud environments (Render) without IPv6 support
 if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder("ipv4first");
 }
 
+// Custom DNS lookup function forcing IPv4 resolution only (prevents ENETUNREACH IPv6 on Render)
+const customIPv4Lookup = (hostname, options, callback) => {
+    return dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+        if (err) return callback(err);
+        return callback(null, address, 4);
+    });
+};
+
 const sendEmail = async ({ to, subject, html, text }) => {
     const user = (process.env.EMAIL_USER || "bhawrasanjeev@gmail.com").trim();
-    const pass = (process.env.EMAIL_PASS || "yihl nigv vepn viyd").trim().replace(/\s+/g, "");
+    const pass = (process.env.EMAIL_PASS || "yihlnigvvepnviyd").trim().replace(/\s+/g, "");
     const host = process.env.EMAIL_HOST || "smtp.gmail.com";
     const port = parseInt(process.env.EMAIL_PORT) || 587;
 
     console.log(`📧 Dispatching Nodemailer Email to ${to} using sender ${user} (${host}:${port})...`);
 
-    // Primary Transport: Forced IPv4 (family: 4) over Port 587 STARTTLS for Render
+    // Primary Transporter: Forced IPv4 DNS lookup over Port 587 STARTTLS
     const primaryTransporter = nodemailer.createTransport({
         host: host,
         port: port,
-        secure: port === 465, // false for 587 (STARTTLS)
+        secure: port === 465,
         requireTLS: port === 587,
-        family: 4, // Explicitly force IPv4 socket connection
+        lookup: customIPv4Lookup,
         auth: {
             user: user,
             pass: pass
         },
         tls: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            servername: host
         },
         connectionTimeout: 15000,
         greetingTimeout: 15000,
@@ -48,23 +56,44 @@ const sendEmail = async ({ to, subject, html, text }) => {
     } catch (error) {
         console.error(`❌ Primary Nodemailer Error (Port ${port}):`, error.message || error);
 
-        // Fallback Transport: Try Gmail service with IPv4 forced
-        console.log("🔄 Attempting fallback via Nodemailer Gmail service (IPv4 forced)...");
+        // Fallback Transporter 1: Port 465 with IPv4 forced
+        console.log("🔄 Attempting Fallback 1: Port 465 (IPv4 forced)...");
         try {
-            const fallbackTransporter = nodemailer.createTransport({
+            const fallbackTransporter465 = nodemailer.createTransport({
+                host: host,
+                port: 465,
+                secure: true,
+                lookup: customIPv4Lookup,
+                auth: { user, pass },
+                tls: { rejectUnauthorized: false, servername: host },
+                connectionTimeout: 15000,
+                socketTimeout: 15000
+            });
+            const info = await fallbackTransporter465.sendMail(mailOptions);
+            console.log(`✅ Nodemailer Fallback (465) Sent Successfully to ${to}. Message ID: ${info.messageId}`);
+            return info;
+        } catch (fbErr1) {
+            console.error("❌ Fallback 1 (Port 465) Error:", fbErr1.message || fbErr1);
+        }
+
+        // Fallback Transporter 2: Service 'gmail' with IPv4 forced
+        console.log("🔄 Attempting Fallback 2: Nodemailer 'gmail' service (IPv4 forced)...");
+        try {
+            const fallbackTransporterService = nodemailer.createTransport({
                 service: "gmail",
-                family: 4, // Explicitly force IPv4 socket connection
+                lookup: customIPv4Lookup,
                 auth: { user, pass },
                 tls: { rejectUnauthorized: false },
                 connectionTimeout: 15000,
                 socketTimeout: 15000
             });
-            const info = await fallbackTransporter.sendMail(mailOptions);
-            console.log(`✅ Nodemailer Fallback Email Sent Successfully to ${to}. Message ID: ${info.messageId}`);
+            const info = await fallbackTransporterService.sendMail(mailOptions);
+            console.log(`✅ Nodemailer Fallback (Service) Sent Successfully to ${to}. Message ID: ${info.messageId}`);
             return info;
-        } catch (fallbackErr) {
-            console.error("❌ Nodemailer Fallback Error:", fallbackErr.message || fallbackErr);
+        } catch (fbErr2) {
+            console.error("❌ Fallback 2 (Service) Error:", fbErr2.message || fbErr2);
         }
+
         return null;
     }
 };
