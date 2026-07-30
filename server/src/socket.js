@@ -38,6 +38,22 @@ const initSocket = (server) => {
             socket.in(room).emit("message_received", newMessageReceived);
         });
 
+        // Real-time Item Broadcasting across all online clients
+        socket.on("new_item_posted", (newItem) => {
+            console.log("⚡ Broadcasting new item to all clients:", newItem?.title);
+            socket.broadcast.emit("item_added", newItem);
+        });
+
+        socket.on("item_claimed_event", (claimedItemId) => {
+            console.log("⚡ Broadcasting item claimed to all clients:", claimedItemId);
+            socket.broadcast.emit("item_claimed", claimedItemId);
+        });
+
+        socket.on("item_deleted_event", (deletedItemId) => {
+            console.log("⚡ Broadcasting item deleted to all clients:", deletedItemId);
+            socket.broadcast.emit("item_deleted", deletedItemId);
+        });
+
         socket.off("setup", (userData) => {
             if (userData && userData._id) {
                 socket.leave(userData._id);

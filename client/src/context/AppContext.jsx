@@ -78,25 +78,38 @@ export const AppProvider = ({ children }) => {
     setUnreadConvIds((prev) => prev.filter((id) => id !== convId));
   };
 
-  // Fetch items from MongoDB backend & merge with default items
+  // Fetch items from MongoDB backend & merge with local storage backup items
   const fetchItems = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/items?status=all`);
-      if (!response.ok) return;
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        const formattedApiItems = data.map((it) => ({
-          ...it,
-          id: it._id || it.id,
-          imageUrl: it.photoUrl || it.imageUrl || '',
-          reporterName: it.postedBy?.name || 'Campus Student',
-          reporterAvatar: it.postedBy?.avatar,
-          contactPhone: it.contactPhone || '',
-          date: typeof it.date === 'string' ? it.date : new Date(it.date).toLocaleDateString(),
-        }));
-
-        setItems(formattedApiItems);
+      let formattedApiItems = [];
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          formattedApiItems = data.map((it) => ({
+            ...it,
+            id: it._id || it.id,
+            imageUrl: it.photoUrl || it.imageUrl || '',
+            reporterName: it.postedBy?.name || 'Campus Student',
+            reporterAvatar: it.postedBy?.avatar,
+            contactPhone: it.contactPhone || '',
+            date: typeof it.date === 'string' ? it.date : new Date(it.date).toLocaleDateString(),
+          }));
+        }
       }
+
+      // Merge local storage backup items so items never get lost on reload
+      const storedLocalItemsStr = localStorage.getItem('campuscrate_custom_items');
+      const storedLocalItems = storedLocalItemsStr ? JSON.parse(storedLocalItemsStr) : [];
+
+      const combined = [...formattedApiItems];
+      storedLocalItems.forEach((localIt) => {
+        if (!combined.some((dbIt) => String(dbIt.id) === String(localIt.id) || String(dbIt._id) === String(localIt.id))) {
+          combined.unshift(localIt);
+        }
+      });
+
+      setItems(combined.length > 0 ? combined : DEFAULT_ITEMS);
     } catch (err) {
       console.warn('API fetchItems warning (using local state):', err.message);
     }
@@ -106,7 +119,7 @@ export const AppProvider = ({ children }) => {
     fetchItems();
   }, []);
 
-  // Initialize Socket.io connection on user auth
+  // Initialize Socket.io connection on user auth & subscribe to real-time events
   useEffect(() => {
     if (currentUser) {
       const newSocket = io(API_SERVER_URL, {
@@ -116,6 +129,28 @@ export const AppProvider = ({ children }) => {
       newSocket.on('connect', () => {
         console.log('⚡ Socket connected to server');
         newSocket.emit('setup', currentUser);
+      });
+
+      newSocket.on('item_added', (newItem) => {
+        console.log('⚡ Real-time Socket item added:', newItem?.title);
+        setItems((prev) => {
+          if (prev.some((it) => String(it.id) === String(newItem.id) || String(it._id) === String(newItem._id))) {
+            return prev;
+          }
+          return [newItem, ...prev];
+        });
+      });
+
+      newSocket.on('item_claimed', (claimedId) => {
+        console.log('⚡ Real-time Socket item claimed:', claimedId);
+        setItems((prev) =>
+          prev.map((it) => (String(it.id) === String(claimedId) || String(it._id) === String(claimedId) ? { ...it, status: 'claimed' } : it))
+        );
+      });
+
+      newSocket.on('item_deleted', (deletedId) => {
+        console.log('⚡ Real-time Socket item deleted:', deletedId);
+        setItems((prev) => prev.filter((it) => String(it.id) !== String(deletedId) && String(it._id) !== String(deletedId)));
       });
 
       newSocket.on('message_received', (newMessage) => {
@@ -437,7 +472,7 @@ export const AppProvider = ({ children }) => {
     setCurrentPage('lost');
   };
 
-  // Add Item with ImageKit & MongoDB persistence
+  // Add Item with ImageKit, MongoDB persistence, LocalStorage Backup & Socket.io Realtime Broadcast
   const addItem = async (item) => {
     const tempId = `item_${Date.now()}`;
     const newItemLocal = {
@@ -446,14 +481,20 @@ export const AppProvider = ({ children }) => {
       status: 'active',
       tags: item.tags || [],
       createdOn: new Date().toLocaleDateString(),
+      reporterName: currentUser?.name || item.reporterName || 'Campus Student',
+      reporterAvatar: currentUser?.avatar || item.reporterAvatar || '/user-avatar.svg',
     };
     
+    // Save to local storage as immediate backup so items NEVER disappear on reload
+    const existingLocal = JSON.parse(localStorage.getItem('campuscrate_custom_items') || '[]');
+    localStorage.setItem('campuscrate_custom_items', JSON.stringify([newItemLocal, ...existingLocal]));
+
     setItems((prev) => [newItemLocal, ...prev]);
+
+    let finalPhotoUrl = item.imageUrl || item.photoUrl || '';
 
     if (token) {
       try {
-        let finalPhotoUrl = item.imageUrl || item.photoUrl || '';
-
         if (finalPhotoUrl && finalPhotoUrl.startsWith('data:image/')) {
           try {
             const uploadRes = await fetch(`${API_BASE_URL}/upload`, {
@@ -505,23 +546,47 @@ export const AppProvider = ({ children }) => {
             contactPhone: savedItem.contactPhone || item.contactPhone,
             date: typeof savedItem.date === 'string' ? savedItem.date : item.date,
           };
+
+          // Update React state
           setItems((prev) =>
             prev.map((it) => (it.id === tempId ? formattedSavedItem : it))
           );
+
+          // Update localStorage backup with DB version
+          const currentLocal = JSON.parse(localStorage.getItem('campuscrate_custom_items') || '[]');
+          const updatedLocal = currentLocal.map((it) => (it.id === tempId ? formattedSavedItem : it));
+          localStorage.setItem('campuscrate_custom_items', JSON.stringify(updatedLocal));
+
+          // Broadcast real-time event to all online users
+          if (socket) {
+            socket.emit('new_item_posted', formattedSavedItem);
+          }
+
           return formattedSavedItem;
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          console.error('MongoDB API create item response error:', response.status, errData);
         }
       } catch (err) {
         console.warn('API addItem warning:', err.message);
       }
     }
+
+    if (socket) {
+      socket.emit('new_item_posted', newItemLocal);
+    }
     return newItemLocal;
   };
 
-  // Mark item as claimed in MongoDB
+  // Mark item as claimed in MongoDB & broadcast real-time socket event
   const markItemAsClaimed = async (itemId) => {
     setItems((prev) =>
       prev.map((it) => (it.id === itemId || it._id === itemId ? { ...it, status: 'claimed' } : it))
     );
+
+    if (socket) {
+      socket.emit('item_claimed_event', itemId);
+    }
 
     if (token && typeof itemId === 'string' && !itemId.startsWith('item_')) {
       try {
@@ -539,9 +604,18 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Delete item post from MongoDB
+  // Delete item post from MongoDB & broadcast real-time socket event
   const deleteItemPost = async (itemId) => {
     setItems((prev) => prev.filter((it) => it.id !== itemId && it._id !== itemId));
+
+    // Remove from local backup storage if present
+    const currentLocal = JSON.parse(localStorage.getItem('campuscrate_custom_items') || '[]');
+    const filteredLocal = currentLocal.filter((it) => it.id !== itemId && it._id !== itemId);
+    localStorage.setItem('campuscrate_custom_items', JSON.stringify(filteredLocal));
+
+    if (socket) {
+      socket.emit('item_deleted_event', itemId);
+    }
 
     if (token && typeof itemId === 'string' && !itemId.startsWith('item_')) {
       try {
