@@ -40,6 +40,13 @@ export const AppProvider = ({ children }) => {
   // Unread messages tracking state
   const [unreadConvIds, setUnreadConvIds] = useState([]);
 
+  // New Lost Item notification indicator state
+  const [hasNewLostItem, setHasNewLostItem] = useState(false);
+
+  const clearNewLostItem = () => {
+    setHasNewLostItem(false);
+  };
+
   // Theme state
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('campuscrate_theme');
@@ -139,6 +146,9 @@ export const AppProvider = ({ children }) => {
           }
           return [newItem, ...prev];
         });
+        if (newItem?.type === 'lost') {
+          setHasNewLostItem(true);
+        }
       });
 
       newSocket.on('item_claimed', (claimedId) => {
@@ -939,6 +949,9 @@ export const AppProvider = ({ children }) => {
       unreadConvIds,
       hasUnreadMessages,
       markConvAsRead,
+      hasNewLostItem,
+      clearNewLostItem,
+      setHasNewLostItem,
       theme,
       toggleTheme,
       DEFAULT_CATEGORIES,
@@ -952,6 +965,7 @@ export const AppProvider = ({ children }) => {
       currentPage,
       currentUser,
       globalSearchQuery,
+      hasNewLostItem,
       hasUnreadMessages,
       items,
       reportInitialType,

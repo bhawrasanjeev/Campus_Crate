@@ -5,7 +5,18 @@ import { useApp } from '../context/AppContext';
 
 export const Navbar = () => {
   const navigate = useNavigate();
-  const { currentUser, setGlobalSearchQuery, globalSearchQuery, logout, theme, toggleTheme, hasUnreadMessages } = useApp();
+  const {
+    currentUser,
+    setGlobalSearchQuery,
+    globalSearchQuery,
+    logout,
+    theme,
+    toggleTheme,
+    hasUnreadMessages,
+    unreadConvIds,
+    hasNewLostItem,
+    clearNewLostItem,
+  } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -25,7 +36,7 @@ export const Navbar = () => {
       <div className="navbar-content-container">
         {/* Left Section: Brand Logo & Navigation Links */}
         <div className="navbar-left-group">
-          <Link to="/lost" className="navbar-logo">
+          <Link to="/lost" className="navbar-logo" onClick={clearNewLostItem}>
             <img
               src="/logo.svg"
               alt="CampusCrate Logo"
@@ -44,12 +55,19 @@ export const Navbar = () => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isMessagesNav = item.path === '/messages';
-              const showDot = isMessagesNav && hasUnreadMessages;
+              const isLostNav = item.path === '/lost';
+
+              const showMessageDot = isMessagesNav && (hasUnreadMessages || (unreadConvIds && unreadConvIds.length > 0));
+              const showLostDot = isLostNav && hasNewLostItem;
+              const showGreenDot = showMessageDot || showLostDot;
 
               return (
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  onClick={() => {
+                    if (isLostNav) clearNewLostItem();
+                  }}
                   style={({ isActive }) => ({
                     position: 'relative',
                     display: 'inline-flex',
@@ -68,18 +86,10 @@ export const Navbar = () => {
                 >
                   <Icon size={15} />
                   {item.label}
-                  {showDot && (
+                  {showGreenDot && (
                     <span
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: '#10b981',
-                        boxShadow: '0 0 8px #10b981',
-                        display: 'inline-block',
-                        marginLeft: '3px',
-                      }}
-                      title="New unread message"
+                      className="nav-green-dot"
+                      title={showLostDot ? 'New lost item reported' : 'New message arrived'}
                     />
                   )}
                   {item.adminOnly && (
@@ -245,13 +255,20 @@ export const Navbar = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isMessagesNav = item.path === '/messages';
-            const showDot = isMessagesNav && hasUnreadMessages;
+            const isLostNav = item.path === '/lost';
+
+            const showMessageDot = isMessagesNav && (hasUnreadMessages || (unreadConvIds && unreadConvIds.length > 0));
+            const showLostDot = isLostNav && hasNewLostItem;
+            const showGreenDot = showMessageDot || showLostDot;
 
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => {
+                  if (isLostNav) clearNewLostItem();
+                  setMobileMenuOpen(false);
+                }}
                 style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
@@ -269,15 +286,10 @@ export const Navbar = () => {
                   <Icon size={18} />
                   {item.label}
                 </div>
-                {showDot && (
+                {showGreenDot && (
                   <span
-                    style={{
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      backgroundColor: '#10b981',
-                      boxShadow: '0 0 8px #10b981',
-                    }}
+                    className="nav-green-dot"
+                    title={showLostDot ? 'New lost item reported' : 'New message arrived'}
                   />
                 )}
               </NavLink>
