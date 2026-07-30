@@ -350,26 +350,16 @@ export const LoginPage = () => {
                 </div>
 
                 {isRegisterMode && (
-                  <>
-                    <div className="auth-input-group">
-                      <Building size={18} className="auth-input-icon" />
-                      <select name="department" value={formData.department} onChange={handleChange}>
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Engineering">Engineering</option>
-                        <option value="Business Administration">Business Administration</option>
-                        <option value="Arts & Humanities">Arts & Humanities</option>
-                        <option value="Medical Sciences">Medical Sciences</option>
-                      </select>
-                    </div>
-
-                    <div className="auth-input-group">
-                      <ShieldCheck size={18} className="auth-input-icon" />
-                      <select name="role" value={formData.role} onChange={handleChange}>
-                        <option value="student">Student Account</option>
-                        <option value="admin">Campus Admin Officer</option>
-                      </select>
-                    </div>
-                  </>
+                  <div className="auth-input-group">
+                    <Building size={18} className="auth-input-icon" />
+                    <select name="department" value={formData.department} onChange={handleChange}>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Business Administration">Business Administration</option>
+                      <option value="Arts & Humanities">Arts & Humanities</option>
+                      <option value="Medical Sciences">Medical Sciences</option>
+                    </select>
+                  </div>
                 )}
 
                 <button type="submit" className="btn-auth-submit" disabled={authLoading}>
@@ -380,32 +370,6 @@ export const LoginPage = () => {
                       : 'Sign In'}
                 </button>
               </form>
-
-              {!isRegisterMode && (
-                <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
-                        email: 'admin@college.edu',
-                        password: 'adminpassword123',
-                      });
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--color-primary)',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                    }}
-                  >
-                    ⚡ Quick Admin Demo Fill (admin@college.edu)
-                  </button>
-                </div>
-              )}
 
               <div className="verification-badge">
                 <ShieldCheck size={16} />

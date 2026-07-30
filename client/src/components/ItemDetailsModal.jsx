@@ -36,11 +36,19 @@ export const ItemDetailsModal = ({ item, onClose }) => {
     (currentUser?.name && item.reporterName && currentUser.name.trim().toLowerCase() === item.reporterName.trim().toLowerCase())
   );
 
-  const handleStartChat = () => {
+  const handleRequireAuth = (actionName) => {
     if (!currentUser) {
-      setShowGuestInquiry(true);
-      return;
+      if (window.confirm(`Please sign in or register to ${actionName}. Would you like to go to the login page now?`)) {
+        onClose();
+        navigate('/login');
+      }
+      return false;
     }
+    return true;
+  };
+
+  const handleStartChat = () => {
+    if (!handleRequireAuth('message the item owner/finder')) return;
     const ownerId = typeof item.postedBy === 'object' ? item.postedBy?._id : item.postedBy;
     const itemId = item._id || item.id;
     startChatWithUser(posterName, item.title, item.reporterAvatar || '/user-avatar.svg', ownerId, itemId);
@@ -48,27 +56,11 @@ export const ItemDetailsModal = ({ item, onClose }) => {
     navigate('/messages');
   };
 
-  const handleSendGuestInquirySubmit = async (e) => {
-    e.preventDefault();
-    setIsSendingInquiry(true);
-    setInquiryStatusMsg('');
-    const res = await submitGuestInquiry(item.id || item._id, guestMsgName, guestMsgEmail, guestMsgBody);
-    setIsSendingInquiry(false);
-    if (res.success) {
-      setInquiryStatusMsg('✅ Your inquiry message has been sent to the owner!');
-      setTimeout(() => {
-        setShowGuestInquiry(false);
-        setInquiryStatusMsg('');
-      }, 2000);
-    } else {
-      setInquiryStatusMsg('❌ Failed to send inquiry. Please try again.');
-    }
-  };
-
   const handleReportSubmit = async (e) => {
     e.preventDefault();
+    if (!handleRequireAuth('submit a report')) return;
     setReportStatusMsg('');
-    const res = await submitReport(item.id || item._id, reportReason, guestReportName, guestReportEmail);
+    const res = await submitReport(item.id || item._id, reportReason);
     if (res.success) {
       setReportStatusMsg('✅ Report submitted to campus admin for safety review.');
       setTimeout(() => {
@@ -81,6 +73,7 @@ export const ItemDetailsModal = ({ item, onClose }) => {
   };
 
   const handleMarkClaimed = () => {
+    if (!handleRequireAuth('mark items as claimed')) return;
     markItemAsClaimed(item.id || item._id);
   };
 
@@ -214,51 +207,7 @@ export const ItemDetailsModal = ({ item, onClose }) => {
             </div>
           </div>
 
-          {/* GUEST INQUIRY FORM MODAL INLINE */}
-          {showGuestInquiry && (
-            <div style={{ padding: '20px', borderRadius: '16px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', color: '#1e3a8a' }}>📩 Send Guest Message to {posterName}</h3>
-                <button type="button" onClick={() => setShowGuestInquiry(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
-              </div>
-              {inquiryStatusMsg && <div style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 600 }}>{inquiryStatusMsg}</div>}
-              <form onSubmit={handleSendGuestInquirySubmit} style={{ display: 'grid', gap: '10px' }}>
-                <input
-                  type="text"
-                  placeholder="Your Name"
-                  value={guestMsgName}
-                  onChange={(e) => setGuestMsgName(e.target.value)}
-                  required
-                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
-                />
-                <input
-                  type="email"
-                  placeholder="Your Email Address"
-                  value={guestMsgEmail}
-                  onChange={(e) => setGuestMsgEmail(e.target.value)}
-                  required
-                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
-                />
-                <textarea
-                  placeholder="Type your message or inquiry about this item..."
-                  value={guestMsgBody}
-                  onChange={(e) => setGuestMsgBody(e.target.value)}
-                  required
-                  rows={3}
-                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', resize: 'vertical' }}
-                />
-                <button
-                  type="submit"
-                  disabled={isSendingInquiry}
-                  style={{ padding: '10px', borderRadius: '8px', backgroundColor: '#1d4ed8', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                >
-                  <Send size={14} /> {isSendingInquiry ? 'Sending...' : 'Send Inquiry'}
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* SAFETY REPORT MODAL INLINE */}
+          {/* SAFETY REPORT MODAL INLINE (Logged-In Users Only) */}
           {showReportModal && (
             <div style={{ padding: '20px', borderRadius: '16px', border: '1px solid #fca5a5', backgroundColor: '#fef2f2' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -267,26 +216,6 @@ export const ItemDetailsModal = ({ item, onClose }) => {
               </div>
               {reportStatusMsg && <div style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 600 }}>{reportStatusMsg}</div>}
               <form onSubmit={handleReportSubmit} style={{ display: 'grid', gap: '10px' }}>
-                {!currentUser && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Your Name (Guest)"
-                      value={guestReportName}
-                      onChange={(e) => setGuestReportName(e.target.value)}
-                      required
-                      style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fca5a5', outline: 'none' }}
-                    />
-                    <input
-                      type="email"
-                      placeholder="Your Email Address"
-                      value={guestReportEmail}
-                      onChange={(e) => setGuestReportEmail(e.target.value)}
-                      required
-                      style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fca5a5', outline: 'none' }}
-                    />
-                  </>
-                )}
                 <select
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
@@ -313,7 +242,7 @@ export const ItemDetailsModal = ({ item, onClose }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <button
               type="button"
-              onClick={() => setShowReportModal(!showReportModal)}
+              onClick={() => handleRequireAuth('report a listing') && setShowReportModal(!showReportModal)}
               style={{
                 padding: '10px 14px',
                 borderRadius: '10px',
@@ -391,22 +320,43 @@ export const ItemDetailsModal = ({ item, onClose }) => {
                 </div>
               ) : (
                 <>
-                  <a
-                    href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
-                    style={{
-                      padding: '12px 18px',
-                      borderRadius: '12px',
-                      backgroundColor: 'var(--color-primary-bg)',
-                      color: 'var(--color-primary)',
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <Phone size={16} /> Call {phone}
-                  </a>
+                  {currentUser ? (
+                    <a
+                      href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '12px',
+                        backgroundColor: 'var(--color-primary-bg)',
+                        color: 'var(--color-primary)',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <Phone size={16} /> Call {phone}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleRequireAuth('view contact details and call')}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '12px',
+                        backgroundColor: 'var(--color-primary-bg)',
+                        color: 'var(--color-primary)',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        border: 'none',
+                      }}
+                    >
+                      <Phone size={16} /> Call (Sign in to view)
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -424,7 +374,7 @@ export const ItemDetailsModal = ({ item, onClose }) => {
                       border: 'none',
                     }}
                   >
-                    <MessageSquare size={16} /> {currentUser ? (isLost ? 'Message Owner' : 'Message Finder') : 'Guest Message Owner'}
+                    <MessageSquare size={16} /> {isLost ? 'Message Owner' : 'Message Finder'}
                   </button>
                 </>
               )}
