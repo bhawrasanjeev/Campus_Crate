@@ -375,27 +375,6 @@ export const LoginPage = () => {
                 <ShieldCheck size={16} />
                 Nodemailer & Resend OTP Email Verification Enabled
               </div>
-
-              <div
-                style={{
-                  marginTop: '16px',
-                  padding: '12px 14px',
-                  borderRadius: '10px',
-                  backgroundColor: 'var(--color-surface-dim)',
-                  border: '1px solid var(--color-border)',
-                  fontSize: '13px',
-                }}
-              >
-                <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🛡️ Admin Account Credentials (shanu admin):
-                </div>
-                <div style={{ color: 'var(--color-text-secondary)' }}>
-                  Email: <strong style={{ color: 'var(--color-text-main)' }}>shanuadmin@gmail.com</strong>
-                </div>
-                <div style={{ color: 'var(--color-text-secondary)' }}>
-                  Password: <strong style={{ color: 'var(--color-text-main)' }}>adminpassword123</strong>
-                </div>
-              </div>
             </>
           )}
         </div>
