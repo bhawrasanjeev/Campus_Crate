@@ -78,6 +78,17 @@ const ProtectedAdminRoute = ({ children }) => {
   return children;
 };
 
+// Protected Route Guard for Logged-In Users
+const ProtectedUserRoute = ({ children }) => {
+  const { currentUser } = useApp();
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
 const MainContent = () => {
   const [selectedItemForDetails, setSelectedItemForDetails] = useState(null);
 
@@ -105,12 +116,27 @@ const MainContent = () => {
           />
           <Route
             path="/report"
-            element={<ReportItemPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />}
+            element={
+              <ProtectedUserRoute>
+                <ReportItemPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />
+              </ProtectedUserRoute>
+            }
           />
-          <Route path="/messages" element={<MessagesPage />} />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedUserRoute>
+                <MessagesPage />
+              </ProtectedUserRoute>
+            }
+          />
           <Route
             path="/my-posts"
-            element={<MyPostsPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />}
+            element={
+              <ProtectedUserRoute>
+                <MyPostsPage onOpenDetails={(item) => setSelectedItemForDetails(item)} />
+              </ProtectedUserRoute>
+            }
           />
           <Route
             path="/admin"

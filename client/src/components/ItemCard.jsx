@@ -23,6 +23,11 @@ export const ItemCard = ({ item, onSelect }) => {
 
   const handleMessageUser = (e) => {
     e.stopPropagation();
+    if (!currentUser) {
+      alert('Please sign in or create an account to message the item poster.');
+      navigate('/login');
+      return;
+    }
     const ownerId = typeof item.postedBy === 'object' ? item.postedBy?._id : item.postedBy;
     const itemId = item._id || item.id;
     startChatWithUser(posterName, item.title, item.reporterAvatar || '/user-avatar.svg', ownerId, itemId);
@@ -95,7 +100,7 @@ export const ItemCard = ({ item, onSelect }) => {
           {!isOwner && (
             <div className="meta-row contact-phone-row" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
               <Phone size={14} />
-              <span>Contact: {phone}</span>
+              <span>Contact: {currentUser ? phone : 'Sign in to view contact'}</span>
             </div>
           )}
         </div>
