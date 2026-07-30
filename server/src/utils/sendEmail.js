@@ -19,12 +19,13 @@ const sendEmail = async ({ to, subject, html, text }) => {
 
     // Option 1: Brevo HTTPS REST API (Recommended for Render - 100% success on Port 443 to ANY recipient email)
     if (process.env.BREVO_API_KEY) {
+        const cleanedBrevoKey = process.env.BREVO_API_KEY.replace(/["'\s]/g, "");
         console.log(`📧 Dispatching Email via Brevo HTTPS API to ${to}...`);
         try {
             const response = await fetch("https://api.brevo.com/v3/smtp/email", {
                 method: "POST",
                 headers: {
-                    "api-key": process.env.BREVO_API_KEY.trim(),
+                    "api-key": cleanedBrevoKey,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
@@ -48,12 +49,13 @@ const sendEmail = async ({ to, subject, html, text }) => {
 
     // Option 2: Resend HTTPS REST API (Limits to account owner unless domain is verified)
     if (process.env.RESEND_API_KEY) {
+        const cleanedResendKey = process.env.RESEND_API_KEY.replace(/["'\s]/g, "");
         console.log(`📧 Dispatching Email via Resend HTTPS API to ${to}...`);
         try {
             const response = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+                    "Authorization": `Bearer ${cleanedResendKey}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
@@ -75,20 +77,33 @@ const sendEmail = async ({ to, subject, html, text }) => {
         }
     }
 
-    // Option 3: Nodemailer Direct SMTP (Default / Local fallback)
-    const host = process.env.EMAIL_HOST || "smtp.gmail.com";
+    // Option 3: Nodemailer Direct SMTP with Explicit IPv4 Resolution
+    const rawHost = process.env.EMAIL_HOST || "smtp.gmail.com";
     const port = parseInt(process.env.EMAIL_PORT) || 587;
 
-    console.log(`📧 Dispatching Nodemailer Email to ${to} using sender ${user} (${host}:${port})...`);
+    // Resolve hostname to literal IPv4 IP to guarantee no IPv6 ENETUNREACH
+    let targetIp = rawHost;
+    try {
+        const ipv4Addresses = await new Promise((resolve, reject) => {
+            dns.resolve4(rawHost, (err, addrs) => (err || !addrs || addrs.length === 0 ? reject(err) : resolve(addrs)));
+        });
+        if (ipv4Addresses && ipv4Addresses.length > 0) {
+            targetIp = ipv4Addresses[0];
+            console.log(`🌐 Resolved ${rawHost} to IPv4 IP: ${targetIp}`);
+        }
+    } catch (dnsErr) {
+        console.warn("DNS IPv4 resolution notice (using raw host):", dnsErr.message);
+    }
+
+    console.log(`📧 Dispatching Nodemailer Email to ${to} using sender ${user} (${targetIp}:${port})...`);
 
     const primaryTransporter = nodemailer.createTransport({
-        host: host,
+        host: targetIp,
         port: port,
         secure: port === 465,
         requireTLS: port === 587,
-        lookup: customIPv4Lookup,
         auth: { user, pass },
-        tls: { rejectUnauthorized: false, servername: host },
+        tls: { rejectUnauthorized: false, servername: rawHost },
         connectionTimeout: 15000,
         greetingTimeout: 15000,
         socketTimeout: 15000
@@ -112,12 +127,11 @@ const sendEmail = async ({ to, subject, html, text }) => {
         console.log("🔄 Attempting Fallback: Port 465...");
         try {
             const fallback465 = nodemailer.createTransport({
-                host: host,
+                host: targetIp,
                 port: 465,
                 secure: true,
-                lookup: customIPv4Lookup,
                 auth: { user, pass },
-                tls: { rejectUnauthorized: false, servername: host },
+                tls: { rejectUnauthorized: false, servername: rawHost },
                 connectionTimeout: 15000,
                 socketTimeout: 15000
             });
