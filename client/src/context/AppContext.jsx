@@ -8,8 +8,27 @@ import {
 } from '../data/mockData';
 
 const AppContext = createContext(null);
-const API_SERVER_URL = (import.meta.env.VITE_API_URL || 'https://campuscrate-em9z.onrender.com').replace(/\/$/, '');
+const getApiServerUrl = () => {
+  if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim() !== '') {
+    return import.meta.env.VITE_API_URL.trim().replace(/\/$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return window.location.origin;
+  }
+  return 'http://localhost:5050';
+};
+
+const API_SERVER_URL = getApiServerUrl();
 const API_BASE_URL = `${API_SERVER_URL}/api`;
+
+const parseJsonResponse = async (response) => {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error('API server returned HTML. Please check VITE_API_URL in your Vercel Environment Variables.');
+  }
+};
 
 export const AppProvider = ({ children }) => {
   const [currentPage, setCurrentPage] = useState('lost');
@@ -282,7 +301,7 @@ export const AppProvider = ({ children }) => {
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
 
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');

@@ -62,8 +62,8 @@ const registerUser = async (req, res) => {
 
         console.log(`🔑 [NODEMAILER OTP CODE]: ${otpCode} for ${lowerEmail}`);
 
-        // Dispatch Email in background (non-blocking so API responds in <100ms)
-        sendEmail({
+        // Dispatch Email with await to ensure proper tracking and diagnostic output
+        const emailSent = await sendEmail({
             to: lowerEmail,
             subject: "CampusCrate - Your 6-Digit Verification OTP",
             html: `
@@ -79,12 +79,20 @@ const registerUser = async (req, res) => {
                     <p style="font-size: 12px; color: #94a3b8; text-align: center;">This code will expire in 10 minutes. Please do not share this OTP with anyone.</p>
                 </div>
             `
-        }).catch(err => console.error("Background SendEmail Error:", err.message));
+        }).catch(err => {
+            console.error("SendEmail Async Error:", err.message);
+            return null;
+        });
+
+        if (!emailSent) {
+            console.warn(`⚠️ Warning: Failed to send OTP email to ${lowerEmail}. Check Render environment variables (EMAIL_USER & EMAIL_PASS).`);
+        }
 
         res.status(200).json({
             message: "Registration successful. Please enter the 6-digit OTP sent to your email.",
             email: lowerEmail,
-            requiresOtp: true
+            requiresOtp: true,
+            emailSent: !!emailSent
         });
     } catch (error) {
         console.error("Register Error:", error);
@@ -118,7 +126,7 @@ const sendOtp = async (req, res) => {
 
         console.log(`🔑 [NODEMAILER OTP CODE]: ${otpCode} for ${lowerEmail}`);
 
-        sendEmail({
+        const emailSent = await sendEmail({
             to: lowerEmail,
             subject: "CampusCrate - Your OTP Security Code",
             html: `
@@ -132,11 +140,19 @@ const sendOtp = async (req, res) => {
                     </div>
                 </div>
             `
-        }).catch(err => console.error("Background SendEmail Error:", err.message));
+        }).catch(err => {
+            console.error("SendEmail Async Error:", err.message);
+            return null;
+        });
+
+        if (!emailSent) {
+            console.warn(`⚠️ Warning: Failed to send OTP email to ${lowerEmail}. Check Render environment variables (EMAIL_USER & EMAIL_PASS).`);
+        }
 
         res.json({
             message: "OTP sent successfully to your email.",
-            email: lowerEmail
+            email: lowerEmail,
+            emailSent: !!emailSent
         });
     } catch (error) {
         console.error("Send OTP Error:", error);
