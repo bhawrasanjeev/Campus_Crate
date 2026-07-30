@@ -17,36 +17,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
     const user = (process.env.EMAIL_USER || "bhawrasanjeev@gmail.com").trim();
     const pass = (process.env.EMAIL_PASS || "yihlnigvvepnviyd").trim().replace(/\s+/g, "");
 
-    // Option 1: Resend HTTPS REST API
-    if (process.env.RESEND_API_KEY) {
-        console.log(`📧 Dispatching Email via Resend HTTPS API to ${to}...`);
-        try {
-            const response = await fetch("https://api.resend.com/emails", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${process.env.RESEND_API_KEY.trim()}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    from: process.env.RESEND_FROM_EMAIL || "CampusCrate <onboarding@resend.dev>",
-                    to: [to],
-                    subject: subject,
-                    html: html
-                })
-            });
-            const data = await response.json();
-            if (response.ok) {
-                console.log(`✅ Resend Email Sent Successfully to ${to}. ID: ${data.id}`);
-                return data;
-            } else {
-                console.warn("⚠️ Resend API Warning (Resend free sandbox limits external recipients to account owner. Falling through to SMTP):", data.message || data);
-            }
-        } catch (apiErr) {
-            console.error("❌ Resend Fetch Error:", apiErr.message || apiErr);
-        }
-    }
-
-    // Option 2: Brevo HTTPS REST API (Recommended for Render - 100% success on Port 443)
+    // Option 1: Brevo HTTPS REST API (Recommended for Render - 100% success on Port 443 to ANY recipient email)
     if (process.env.BREVO_API_KEY) {
         console.log(`📧 Dispatching Email via Brevo HTTPS API to ${to}...`);
         try {
@@ -72,6 +43,35 @@ const sendEmail = async ({ to, subject, html, text }) => {
             }
         } catch (apiErr) {
             console.error("❌ Brevo Fetch Error:", apiErr.message || apiErr);
+        }
+    }
+
+    // Option 2: Resend HTTPS REST API (Limits to account owner unless domain is verified)
+    if (process.env.RESEND_API_KEY) {
+        console.log(`📧 Dispatching Email via Resend HTTPS API to ${to}...`);
+        try {
+            const response = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    from: process.env.RESEND_FROM_EMAIL || "CampusCrate <onboarding@resend.dev>",
+                    to: [to],
+                    subject: subject,
+                    html: html
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                console.log(`✅ Resend Email Sent Successfully to ${to}. ID: ${data.id}`);
+                return data;
+            } else {
+                console.warn("⚠️ Resend API Warning (Resend free sandbox limits external recipients to account owner. Falling through to SMTP):", data.message || data);
+            }
+        } catch (apiErr) {
+            console.error("❌ Resend Fetch Error:", apiErr.message || apiErr);
         }
     }
 
