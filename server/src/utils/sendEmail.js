@@ -77,6 +77,36 @@ const sendEmail = async ({ to, subject, html, text }) => {
         }
     }
 
+    // Option 3: SendGrid HTTPS REST API (Port 443 - 100 free emails/day)
+    if (process.env.SENDGRID_API_KEY) {
+        const cleanedSGKey = process.env.SENDGRID_API_KEY.replace(/["'\s]/g, "");
+        console.log(`📧 Dispatching Email via SendGrid HTTPS API to ${to}...`);
+        try {
+            const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${cleanedSGKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    personalizations: [{ to: [{ email: to }] }],
+                    from: { email: user, name: "CampusCrate Lost & Found" },
+                    subject: subject,
+                    content: [{ type: "text/html", value: html }]
+                })
+            });
+            if (response.status === 202 || response.ok) {
+                console.log(`✅ SendGrid Email Sent Successfully to ${to}`);
+                return { success: true };
+            } else {
+                const data = await response.json().catch(() => ({}));
+                console.error("❌ SendGrid API Error:", response.status, data);
+            }
+        } catch (apiErr) {
+            console.error("❌ SendGrid Fetch Error:", apiErr.message || apiErr);
+        }
+    }
+
     // Option 3: Nodemailer Direct SMTP with Explicit IPv4 Resolution
     const rawHost = process.env.EMAIL_HOST || "smtp.gmail.com";
     const port = parseInt(process.env.EMAIL_PORT) || 587;
