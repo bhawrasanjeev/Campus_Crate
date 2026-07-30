@@ -103,9 +103,9 @@ export const AdminPage = () => {
       {/* Banner */}
       <div className="admin-header-banner">
         <div>
-          <h1 className="admin-header-title">Campus Safety & Admin Portal</h1>
+          <h1 className="admin-header-title"> Admin Portal</h1>
           <p className="admin-header-subtitle">
-            System administration, item listings moderation, user access controls & system analytics.
+            System administration.
           </p>
         </div>
         <div className="admin-status-badge">

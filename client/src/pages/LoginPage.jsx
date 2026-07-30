@@ -86,14 +86,14 @@ export const LoginPage = () => {
         setShowOtpScreen(true);
         if (res.debugOtp) {
           setOtpDigits(res.debugOtp.split(''));
-          setOtpNotice(`🔑 Verification OTP generated: ${res.debugOtp} (Saved to database & ready to verify)`);
+          setOtpNotice(`Verification OTP generating...`);
         } else {
           setOtpNotice(res.message || 'OTP verification code sent to your email.');
         }
       } else if (res.isOffline) {
         setCurrentUser({
           id: `usr_${Date.now()}`,
-          name: formData.name || 'Sanjeev Bhawra',
+          name: formData.name || 'campuscrater',
           email: formData.email,
           role: formData.role,
           department: formData.department,
@@ -108,7 +108,7 @@ export const LoginPage = () => {
       } else if (res.isOffline) {
         setCurrentUser({
           id: 'usr_mock_1',
-          name: formData.email.split('@')[0] || 'Sanjeev Bhawra',
+          name: formData.email.split('@')[0] || 'campuscrater',
           email: formData.email || 'student@college.edu',
           role: 'student',
           department: 'Computer Science',
@@ -161,18 +161,13 @@ export const LoginPage = () => {
           </div>
 
           <div>
-            <h1 className="banner-heading">Reunite college items with owners</h1>
+            <h1 className="banner-heading">reunite college items with owners</h1>
             <p className="banner-desc">
               Your college campus lost & found hub. Quickly report missing items or help another student
-              recover theirs with secure Nodemailer OTP email verification and real-time chat.
+              for retrieve theirs.
             </p>
           </div>
-
-          <div style={{ fontSize: '12px', opacity: 0.85 }}>
-            🔒 Powered by Nodemailer Email Verification
-          </div>
         </div>
-
         {/* Right Content */}
         <div className="login-right-content">
           {showOtpScreen ? (
@@ -363,8 +358,11 @@ export const LoginPage = () => {
                   <div className="auth-input-group">
                     <Building size={18} className="auth-input-icon" />
                     <select name="department" value={formData.department} onChange={handleChange}>
-                      <option value="Computer Science">Computer Science</option>
-                      <option value="Engineering">Engineering</option>
+                      <option value="Computer Science">Computer Science</option>                       
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Mechanical Engineering">Mechanical Engineering</option>
+                      <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                      <option value="Computer Science and Engineering">Computer Science and Engineering</option>
                       <option value="Business Administration">Business Administration</option>
                       <option value="Arts & Humanities">Arts & Humanities</option>
                       <option value="Medical Sciences">Medical Sciences</option>
@@ -383,7 +381,7 @@ export const LoginPage = () => {
 
               <div className="verification-badge">
                 <ShieldCheck size={16} />
-                Nodemailer & Resend OTP Email Verification Enabled
+               OTP Verification
               </div>
             </>
           )}
