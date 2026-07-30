@@ -36,6 +36,24 @@ const protect = async (req, res, next) => {
     }
 };
 
+const optionalProtect = async (req, res, next) => {
+    let token;
+
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith("Bearer")
+    ) {
+        try {
+            token = req.headers.authorization.split(" ")[1];
+            const decoded = jwt.verify(token, JWT_SECRET);
+            req.user = await User.findById(decoded.id).select("-password");
+        } catch (error) {
+            console.warn("Optional auth token invalid, proceeding as guest.");
+        }
+    }
+    next();
+};
+
 const adminOnly = (req, res, next) => {
     if (req.user && req.user.role === "admin") {
         next();
@@ -44,4 +62,4 @@ const adminOnly = (req, res, next) => {
     }
 };
 
-module.exports = { protect, adminOnly, JWT_SECRET };
+module.exports = { protect, optionalProtect, adminOnly, JWT_SECRET };

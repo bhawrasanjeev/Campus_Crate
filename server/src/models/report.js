@@ -5,7 +5,16 @@ const reportSchema = new mongoose.Schema(
         reporter: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true
+            required: false,
+            default: null
+        },
+        guestName: {
+            type: String,
+            default: "Anonymous Guest"
+        },
+        guestEmail: {
+            type: String,
+            default: ""
         },
         item: {
             type: mongoose.Schema.Types.ObjectId,

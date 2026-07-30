@@ -4,9 +4,13 @@ const {
     accessConversation,
     getConversations,
     getMessages,
-    sendMessage
+    sendMessage,
+    sendGuestInquiry
 } = require("../controllers/chatController");
 const { protect } = require("../middleware/auth");
+
+// Public route for non-logged-in guest inquiries
+router.post("/guest-inquiry", sendGuestInquiry);
 
 router.use(protect);
 

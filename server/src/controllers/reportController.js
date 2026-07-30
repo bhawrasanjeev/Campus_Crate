@@ -1,12 +1,12 @@
 const Report = require("../models/report");
 const Item = require("../models/items");
 
-// @desc    File a new safety/flag report for an item
+// @desc    File a new safety/flag report for an item (supports both authenticated users and guests)
 // @route   POST /api/reports
-// @access  Private (Authenticated Users)
+// @access  Public / Optional Auth
 const createReport = async (req, res) => {
     try {
-        const { itemId, reason } = req.body;
+        const { itemId, reason, guestName, guestEmail } = req.body;
 
         if (!itemId || !reason) {
             return res.status(400).json({ message: "Please provide item ID and reason for reporting." });
@@ -17,11 +17,19 @@ const createReport = async (req, res) => {
             return res.status(404).json({ message: "Item not found." });
         }
 
-        const report = await Report.create({
-            reporter: req.user._id,
+        const reportData = {
             item: itemId,
-            reason
-        });
+            reason: reason.trim()
+        };
+
+        if (req.user) {
+            reportData.reporter = req.user._id;
+        } else {
+            reportData.guestName = (guestName || "Guest Visitor").trim();
+            reportData.guestEmail = (guestEmail || "guest@campuscrate.org").trim();
+        }
+
+        const report = await Report.create(reportData);
 
         const populatedReport = await Report.findById(report._id)
             .populate("reporter", "name email role")
@@ -92,8 +100,27 @@ const updateReportStatus = async (req, res) => {
     }
 };
 
+// @desc    Delete a report permanently
+// @route   DELETE /api/reports/:id
+// @access  Private (Admin Only)
+const deleteReport = async (req, res) => {
+    try {
+        const report = await Report.findById(req.params.id);
+        if (!report) {
+            return res.status(404).json({ message: "Report not found." });
+        }
+
+        await report.deleteOne();
+        res.json({ message: "Report removed successfully.", id: req.params.id });
+    } catch (error) {
+        console.error("Delete Report Error:", error);
+        res.status(500).json({ message: "Server Error deleting report" });
+    }
+};
+
 module.exports = {
     createReport,
     getReports,
-    updateReportStatus
+    updateReportStatus,
+    deleteReport
 };

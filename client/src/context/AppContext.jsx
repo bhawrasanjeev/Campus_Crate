@@ -757,6 +757,69 @@ export const AppProvider = ({ children }) => {
 
   const hasUnreadMessages = unreadConvIds.length > 0;
 
+  // Submit Guest Inquiry message for non-logged-in users
+  const submitGuestInquiry = async (itemId, guestName, guestEmail, message) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/guest-inquiry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, guestName, guestEmail, message }),
+      });
+      const data = await parseJsonResponse(response);
+      return { success: response.ok, message: data.message };
+    } catch (err) {
+      console.warn('submitGuestInquiry error:', err.message);
+      return { success: false, message: err.message };
+    }
+  };
+
+  // Submit Safety / Flag Report (for both logged-in users and guests)
+  const submitReport = async (itemId, reason, guestName, guestEmail) => {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_BASE_URL}/reports`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ itemId, reason, guestName, guestEmail }),
+      });
+      const data = await parseJsonResponse(response);
+      return { success: response.ok, data, message: data.message };
+    } catch (err) {
+      console.warn('submitReport error:', err.message);
+      return { success: false, message: err.message };
+    }
+  };
+
+  // Admin delete report
+  const deleteReportByAdmin = async (reportId) => {
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.warn('deleteReportByAdmin error:', err.message);
+      }
+    }
+  };
+
+  // Admin delete user account
+  const deleteUserByAdmin = async (userId) => {
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.warn('deleteUserByAdmin error:', err.message);
+      }
+    }
+  };
+
   const value = useMemo(
     () => ({
       currentPage,
@@ -792,6 +855,10 @@ export const AppProvider = ({ children }) => {
       fetchMessagesForConv,
       sendMessage,
       startChatWithUser,
+      submitGuestInquiry,
+      submitReport,
+      deleteReportByAdmin,
+      deleteUserByAdmin,
       claims,
       addClaim,
       updateClaimStatus,

@@ -183,11 +183,53 @@ const toggleUserBlock = async (req, res) => {
     }
 };
 
+// @desc    Delete any item listing by Admin
+// @route   DELETE /api/admin/items/:id
+// @access  Private (Admin Only)
+const deleteItemByAdmin = async (req, res) => {
+    try {
+        const item = await Item.findById(req.params.id);
+        if (!item) {
+            return res.status(404).json({ message: "Item not found." });
+        }
+
+        await item.deleteOne();
+        res.json({ message: "Item removed successfully by administrator.", id: req.params.id });
+    } catch (error) {
+        console.error("Delete Item Admin Error:", error);
+        res.status(500).json({ message: "Server Error deleting item" });
+    }
+};
+
+// @desc    Delete a user account by Admin
+// @route   DELETE /api/admin/users/:id
+// @access  Private (Admin Only)
+const deleteUserByAdmin = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        if (user.role === "admin") {
+            return res.status(400).json({ message: "Cannot delete administrator accounts." });
+        }
+
+        await user.deleteOne();
+        res.json({ message: "User account deleted successfully.", id: req.params.id });
+    } catch (error) {
+        console.error("Delete User Admin Error:", error);
+        res.status(500).json({ message: "Server Error deleting user account" });
+    }
+};
+
 module.exports = {
     getDashboardStats,
     createClaim,
     getClaims,
     updateClaim,
     getUsers,
-    toggleUserBlock
+    toggleUserBlock,
+    deleteItemByAdmin,
+    deleteUserByAdmin
 };

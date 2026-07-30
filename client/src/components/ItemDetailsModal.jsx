@@ -1,17 +1,32 @@
-import React from 'react';
-import { X, MapPin, Calendar, Tag, Info, Phone, MessageSquare, CheckCircle2, Trash2, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, MapPin, Calendar, Tag, Info, Phone, MessageSquare, CheckCircle2, Trash2, Check, Flag, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 export const ItemDetailsModal = ({ item, onClose }) => {
   const navigate = useNavigate();
-  const { startChatWithUser, currentUser, markItemAsClaimed, deleteItemPost } = useApp();
+  const { startChatWithUser, currentUser, markItemAsClaimed, deleteItemPost, submitReport, submitGuestInquiry } = useApp();
+  
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [guestReportName, setGuestReportName] = useState('');
+  const [guestReportEmail, setGuestReportEmail] = useState('');
+  const [reportStatusMsg, setReportStatusMsg] = useState('');
+
+  const [showGuestInquiry, setShowGuestInquiry] = useState(false);
+  const [guestMsgName, setGuestMsgName] = useState('');
+  const [guestMsgEmail, setGuestMsgEmail] = useState('');
+  const [guestMsgBody, setGuestMsgBody] = useState('');
+  const [inquiryStatusMsg, setInquiryStatusMsg] = useState('');
+  const [isSendingInquiry, setIsSendingInquiry] = useState(false);
+
   if (!item) return null;
 
   const isLost = item.type === 'lost';
   const isClaimed = item.status === 'claimed' || item.status === 'resolved';
   const posterName = item.reporterName || item.postedBy?.name || (isLost ? 'Item Owner' : 'Item Finder');
   const phone = item.contactPhone || (isLost ? '+91 98765 43210' : '+91 98123 45678');
+  const isAdmin = currentUser?.role === 'admin';
 
   const currentUserId = currentUser?._id || currentUser?.id;
   const posterId = typeof item.postedBy === 'object' ? (item.postedBy?._id || item.postedBy?.id) : item.postedBy;
@@ -22,11 +37,47 @@ export const ItemDetailsModal = ({ item, onClose }) => {
   );
 
   const handleStartChat = () => {
+    if (!currentUser) {
+      setShowGuestInquiry(true);
+      return;
+    }
     const ownerId = typeof item.postedBy === 'object' ? item.postedBy?._id : item.postedBy;
     const itemId = item._id || item.id;
     startChatWithUser(posterName, item.title, item.reporterAvatar || '/user-avatar.svg', ownerId, itemId);
     onClose();
     navigate('/messages');
+  };
+
+  const handleSendGuestInquirySubmit = async (e) => {
+    e.preventDefault();
+    setIsSendingInquiry(true);
+    setInquiryStatusMsg('');
+    const res = await submitGuestInquiry(item.id || item._id, guestMsgName, guestMsgEmail, guestMsgBody);
+    setIsSendingInquiry(false);
+    if (res.success) {
+      setInquiryStatusMsg('✅ Your inquiry message has been sent to the owner!');
+      setTimeout(() => {
+        setShowGuestInquiry(false);
+        setInquiryStatusMsg('');
+      }, 2000);
+    } else {
+      setInquiryStatusMsg('❌ Failed to send inquiry. Please try again.');
+    }
+  };
+
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    setReportStatusMsg('');
+    const res = await submitReport(item.id || item._id, reportReason, guestReportName, guestReportEmail);
+    if (res.success) {
+      setReportStatusMsg('✅ Report submitted to campus admin for safety review.');
+      setTimeout(() => {
+        setShowReportModal(false);
+        setReportStatusMsg('');
+      }, 2000);
+    } else {
+      setReportStatusMsg(`❌ Report error: ${res.message || 'Server error'}`);
+    }
   };
 
   const handleMarkClaimed = () => {
@@ -148,99 +199,185 @@ export const ItemDetailsModal = ({ item, onClose }) => {
                 <div
                   style={{
                     width: '100%',
-                    minHeight: '220px',
                     borderRadius: '18px',
                     backgroundColor: 'var(--color-surface-dim)',
-                    display: 'grid',
-                    placeItems: 'center',
+                    aspectRatio: '4 / 3',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     color: 'var(--color-text-muted)',
                   }}
                 >
-                  No image available
+                  No Image Attached
                 </div>
               )}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                gap: '8px',
-                alignItems: 'center',
-                padding: '10px 14px',
-                borderRadius: '9999px',
-                backgroundColor: 'var(--color-primary-bg)',
-                color: 'var(--color-primary)',
-                fontWeight: 600,
-              }}
-            >
-              <Tag size={14} />
-              {item.category}
-            </div>
-            <div
-              style={{
-                display: 'inline-flex',
-                gap: '8px',
-                alignItems: 'center',
-                padding: '10px 14px',
-                borderRadius: '9999px',
-                backgroundColor: 'var(--color-surface-dim)',
-                color: 'var(--color-text-secondary)',
-                fontWeight: 600,
-              }}
-            >
-              <Info size={14} />
-              {item.type === 'lost' ? 'Lost item' : 'Found item'}
-            </div>
-          </div>
-
-          {Array.isArray(item.tags) && item.tags.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {item.tags.map((tag) => (
-                <span
-                  key={tag}
-                  style={{
-                    padding: '8px 11px',
-                    borderRadius: '9999px',
-                    backgroundColor: 'var(--color-surface-dim)',
-                    color: 'var(--color-text-secondary)',
-                    fontSize: '13px',
-                  }}
+          {/* GUEST INQUIRY FORM MODAL INLINE */}
+          {showGuestInquiry && (
+            <div style={{ padding: '20px', borderRadius: '16px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', color: '#1e3a8a' }}>📩 Send Guest Message to {posterName}</h3>
+                <button type="button" onClick={() => setShowGuestInquiry(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+              </div>
+              {inquiryStatusMsg && <div style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 600 }}>{inquiryStatusMsg}</div>}
+              <form onSubmit={handleSendGuestInquirySubmit} style={{ display: 'grid', gap: '10px' }}>
+                <input
+                  type="text"
+                  placeholder="Your Name"
+                  value={guestMsgName}
+                  onChange={(e) => setGuestMsgName(e.target.value)}
+                  required
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
+                />
+                <input
+                  type="email"
+                  placeholder="Your Email Address"
+                  value={guestMsgEmail}
+                  onChange={(e) => setGuestMsgEmail(e.target.value)}
+                  required
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
+                />
+                <textarea
+                  placeholder="Type your message or inquiry about this item..."
+                  value={guestMsgBody}
+                  onChange={(e) => setGuestMsgBody(e.target.value)}
+                  required
+                  rows={3}
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', resize: 'vertical' }}
+                />
+                <button
+                  type="submit"
+                  disabled={isSendingInquiry}
+                  style={{ padding: '10px', borderRadius: '8px', backgroundColor: '#1d4ed8', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 >
-                  {tag}
-                </span>
-              ))}
+                  <Send size={14} /> {isSendingInquiry ? 'Sending...' : 'Send Inquiry'}
+                </button>
+              </form>
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
-            {isOwner ? (
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {isClaimed ? (
-                  <div
-                    style={{
-                      padding: '12px 18px',
-                      borderRadius: '12px',
-                      backgroundColor: '#d1fae5',
-                      color: '#065f46',
-                      fontWeight: 700,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <Check size={16} /> Item Claimed
-                  </div>
-                ) : (
+          {/* SAFETY REPORT MODAL INLINE */}
+          {showReportModal && (
+            <div style={{ padding: '20px', borderRadius: '16px', border: '1px solid #fca5a5', backgroundColor: '#fef2f2' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', color: '#991b1b' }}>🚩 Report Listing for Moderation</h3>
+                <button type="button" onClick={() => setShowReportModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={16} /></button>
+              </div>
+              {reportStatusMsg && <div style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 600 }}>{reportStatusMsg}</div>}
+              <form onSubmit={handleReportSubmit} style={{ display: 'grid', gap: '10px' }}>
+                {!currentUser && (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Your Name (Guest)"
+                      value={guestReportName}
+                      onChange={(e) => setGuestReportName(e.target.value)}
+                      required
+                      style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fca5a5', outline: 'none' }}
+                    />
+                    <input
+                      type="email"
+                      placeholder="Your Email Address"
+                      value={guestReportEmail}
+                      onChange={(e) => setGuestReportEmail(e.target.value)}
+                      required
+                      style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fca5a5', outline: 'none' }}
+                    />
+                  </>
+                )}
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  required
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fca5a5', outline: 'none' }}
+                >
+                  <option value="">-- Select Reason for Report --</option>
+                  <option value="Inappropriate or Offensive Content">Inappropriate or Offensive Content</option>
+                  <option value="Misleading or Fake Listing">Misleading or Fake Listing</option>
+                  <option value="Duplicate Listing">Duplicate Listing</option>
+                  <option value="Privacy Violation">Privacy Violation</option>
+                  <option value="Other Safety Issue">Other Safety Issue</option>
+                </select>
+                <button
+                  type="submit"
+                  style={{ padding: '10px', borderRadius: '8px', backgroundColor: '#dc2626', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+                >
+                  Submit Flag Report
+                </button>
+              </form>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={() => setShowReportModal(!showReportModal)}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '10px',
+                backgroundColor: 'transparent',
+                color: '#ef4444',
+                fontWeight: 600,
+                border: '1px solid #fca5a5',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+              }}
+            >
+              <Flag size={14} /> Report Listing
+            </button>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+              {(isOwner || isAdmin) ? (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {isClaimed ? (
+                    <div
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '12px',
+                        backgroundColor: '#d1fae5',
+                        color: '#065f46',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <Check size={16} /> Item Claimed
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleMarkClaimed}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '12px',
+                        backgroundColor: '#10b981',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        border: 'none',
+                      }}
+                    >
+                      <CheckCircle2 size={16} /> Mark as Claimed
+                    </button>
+                  )}
+
                   <button
                     type="button"
-                    onClick={handleMarkClaimed}
+                    onClick={handleDeletePost}
                     style={{
                       padding: '12px 18px',
                       borderRadius: '12px',
-                      backgroundColor: '#10b981',
-                      color: '#ffffff',
+                      backgroundColor: 'var(--color-lost-bg)',
+                      color: 'var(--color-lost)',
                       fontWeight: 700,
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -249,84 +386,65 @@ export const ItemDetailsModal = ({ item, onClose }) => {
                       border: 'none',
                     }}
                   >
-                    <CheckCircle2 size={16} /> Mark as Claimed
+                    <Trash2 size={16} /> {isAdmin ? 'Delete Listing (Admin)' : 'Delete Post'}
                   </button>
-                )}
+                </div>
+              ) : (
+                <>
+                  <a
+                    href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '12px',
+                      backgroundColor: 'var(--color-primary-bg)',
+                      color: 'var(--color-primary)',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <Phone size={16} /> Call {phone}
+                  </a>
 
-                <button
-                  type="button"
-                  onClick={handleDeletePost}
-                  style={{
-                    padding: '12px 18px',
-                    borderRadius: '12px',
-                    backgroundColor: 'var(--color-lost-bg)',
-                    color: 'var(--color-lost)',
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    border: 'none',
-                  }}
-                >
-                  <Trash2 size={16} /> Delete Post
-                </button>
-              </div>
-            ) : (
-              <>
-                <a
-                  href={`tel:${phone.replace(/[^0-9+]/g, '')}`}
-                  style={{
-                    padding: '12px 18px',
-                    borderRadius: '12px',
-                    backgroundColor: 'var(--color-primary-bg)',
-                    color: 'var(--color-primary)',
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <Phone size={16} /> Call {phone}
-                </a>
+                  <button
+                    type="button"
+                    onClick={handleStartChat}
+                    style={{
+                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      backgroundColor: 'var(--color-primary)',
+                      color: '#fff',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      border: 'none',
+                    }}
+                  >
+                    <MessageSquare size={16} /> {currentUser ? (isLost ? 'Message Owner' : 'Message Finder') : 'Guest Message Owner'}
+                  </button>
+                </>
+              )}
 
-                <button
-                  type="button"
-                  onClick={handleStartChat}
-                  style={{
-                    padding: '12px 20px',
-                    borderRadius: '12px',
-                    backgroundColor: 'var(--color-primary)',
-                    color: '#fff',
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    border: 'none',
-                  }}
-                >
-                  <MessageSquare size={16} /> {isLost ? 'Message Owner' : 'Message Finder'}
-                </button>
-              </>
-            )}
-
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: '12px 18px',
-                borderRadius: '12px',
-                backgroundColor: 'var(--color-surface-dim)',
-                color: 'var(--color-text-secondary)',
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: 'none',
-              }}
-            >
-              Close
-            </button>
+              <button
+                type="button"
+                onClick={onClose}
+                style={{
+                  padding: '12px 18px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--color-surface-dim)',
+                  color: 'var(--color-text-secondary)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>

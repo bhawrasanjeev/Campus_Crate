@@ -21,13 +21,13 @@ import {
 import './AdminPage.css';
 
 export const AdminPage = () => {
-  const { items, currentUser } = useApp();
+  const { items, currentUser, deleteItemPost, deleteReportByAdmin, deleteUserByAdmin, setSelectedItemForDetails } = useApp();
   const [activeTab, setActiveTab] = useState('overview');
   const [itemSearchQuery, setItemSearchQuery] = useState('');
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
 
-  // Mock list of campus users for management tab
+  // List of campus users for management tab
   const [usersList, setUsersList] = useState([
     { id: 'usr_1', name: 'Sanjeev Bhawra', email: 'sanjeev@college.edu', role: 'admin', dept: 'Computer Science', status: 'Active' },
     { id: 'usr_2', name: 'Ananya Sharma', email: 'ananya@college.edu', role: 'student', dept: 'Electrical Eng.', status: 'Active' },
@@ -35,10 +35,10 @@ export const AdminPage = () => {
     { id: 'usr_4', name: 'Priya Patel', email: 'priya@college.edu', role: 'student', dept: 'Biotechnology', status: 'Blocked' },
   ]);
 
-  // Mock list of safety reports
+  // List of safety reports
   const [reportsList, setReportsList] = useState([
-    { id: 'rep_1', itemTitle: 'iPhone 13 Pro', reporter: 'Priya Patel', reason: 'Misleading description', date: 'Yesterday', status: 'Pending' },
-    { id: 'rep_2', itemTitle: 'Car Keys with Remote', reporter: 'Rohan Verma', reason: 'Duplicate listing', date: '3 days ago', status: 'Resolved' },
+    { id: 'rep_1', itemId: 'item_1', itemTitle: 'iPhone 13 Pro', reporter: 'Priya Patel', reason: 'Misleading description', date: 'Yesterday', status: 'Pending' },
+    { id: 'rep_2', itemId: 'item_2', itemTitle: 'Car Keys with Remote', reporter: 'Rohan Verma', reason: 'Duplicate listing', date: '3 days ago', status: 'Resolved' },
   ]);
 
   // Filtered items
@@ -51,6 +51,32 @@ export const AdminPage = () => {
     const matchesType = filterType === 'all' || item.type === filterType;
     return matchesSearch && matchesType;
   });
+
+  const handleDeleteItem = (item) => {
+    const id = item.id || item._id;
+    if (window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
+      deleteItemPost(id);
+    }
+  };
+
+  const handleDismissReport = (repId) => {
+    deleteReportByAdmin(repId);
+    setReportsList((prev) => prev.filter((r) => r.id !== repId && r._id !== repId));
+  };
+
+  const handleTakeDownReportedItem = (rep) => {
+    if (window.confirm(`Take down item "${rep.itemTitle}"?`)) {
+      if (rep.itemId) deleteItemPost(rep.itemId);
+      handleDismissReport(rep.id);
+    }
+  };
+
+  const handleDeleteUser = (userId, userName) => {
+    if (window.confirm(`Delete user account for "${userName}"?`)) {
+      deleteUserByAdmin(userId);
+      setUsersList((prev) => prev.filter((u) => u.id !== userId && u._id !== userId));
+    }
+  };
 
   const toggleBlockUser = (userId) => {
     setUsersList((prev) =>
@@ -330,14 +356,14 @@ export const AdminPage = () => {
                             <button
                               type="button"
                               className="btn-admin-action"
-                              onClick={() => alert(`Item details: ${item.title}`)}
+                              onClick={() => setSelectedItemForDetails(item)}
                             >
                               <Eye size={12} /> View
                             </button>
                             <button
                               type="button"
                               className="btn-admin-action danger"
-                              onClick={() => alert(`Removed item: ${item.title}`)}
+                              onClick={() => handleDeleteItem(item)}
                             >
                               <Trash2 size={12} /> Delete
                             </button>
@@ -396,14 +422,14 @@ export const AdminPage = () => {
                             <button
                               type="button"
                               className="btn-admin-action success"
-                              onClick={() => alert(`Dismissed report for ${rep.itemTitle}`)}
+                              onClick={() => handleDismissReport(rep.id)}
                             >
                               Dismiss
                             </button>
                             <button
                               type="button"
                               className="btn-admin-action danger"
-                              onClick={() => alert(`Taken down post for ${rep.itemTitle}`)}
+                              onClick={() => handleTakeDownReportedItem(rep)}
                             >
                               Take Down
                             </button>
@@ -485,6 +511,13 @@ export const AdminPage = () => {
                               onClick={() => toggleBlockUser(usr.id)}
                             >
                               <UserX size={12} /> {usr.status === 'Active' ? 'Block' : 'Unblock'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-admin-action danger"
+                              onClick={() => handleDeleteUser(usr.id, usr.name)}
+                            >
+                              <Trash2 size={12} /> Delete User
                             </button>
                           </div>
                         </td>

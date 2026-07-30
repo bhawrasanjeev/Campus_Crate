@@ -6,7 +6,9 @@ const {
     getClaims,
     updateClaim,
     getUsers,
-    toggleUserBlock
+    toggleUserBlock,
+    deleteItemByAdmin,
+    deleteUserByAdmin
 } = require("../controllers/adminController");
 const { protect, adminOnly } = require("../middleware/auth");
 
@@ -25,6 +27,9 @@ router.route("/claims").get(getClaims);
 router.route("/claims/:id").put(updateClaim);
 
 router.route("/users").get(getUsers);
+router.route("/users/:id").delete(deleteUserByAdmin);
 router.route("/users/:id/block").put(toggleUserBlock);
+
+router.route("/items/:id").delete(deleteItemByAdmin);
 
 module.exports = router;

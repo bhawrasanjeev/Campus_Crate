@@ -1,5 +1,7 @@
 const Conversation = require("../models/conversation");
 const Message = require("../models/message");
+const Item = require("../models/items");
+const sendEmail = require("../utils/sendEmail");
 
 // @desc    Create or fetch a direct conversation with another user
 // @route   POST /api/chat/conversations
@@ -118,9 +120,53 @@ const sendMessage = async (req, res) => {
     }
 };
 
+// @desc    Send guest inquiry message to item owner via Email
+// @route   POST /api/chat/guest-inquiry
+// @access  Public
+const sendGuestInquiry = async (req, res) => {
+    try {
+        const { itemId, guestName, guestEmail, message } = req.body;
+        if (!itemId || !message || !guestEmail) {
+            return res.status(400).json({ message: "Item ID, guest email, and message content are required." });
+        }
+
+        const item = await Item.findById(itemId).populate("postedBy", "name email");
+        if (!item) {
+            return res.status(404).json({ message: "Target item not found." });
+        }
+
+        const ownerEmail = item.postedBy?.email;
+        if (ownerEmail) {
+            await sendEmail({
+                to: ownerEmail,
+                subject: `CampusCrate Guest Inquiry: ${item.title}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                        <h3 style="color: #1e3a8a;">New Guest Inquiry for your listing "${item.title}"</h3>
+                        <p><strong>From Guest:</strong> ${guestName || "Campus Visitor"} (&lt;${guestEmail}&gt;)</p>
+                        <p><strong>Message:</strong></p>
+                        <blockquote style="background-color: #f8fafc; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                            ${message}
+                        </blockquote>
+                        <p style="font-size: 12px; color: #64748b;">You can reply directly to the guest at <strong>${guestEmail}</strong>.</p>
+                    </div>
+                `
+            }).catch(err => console.error("Guest Inquiry Email Error:", err.message));
+        }
+
+        res.status(200).json({
+            message: "Your inquiry message has been delivered to the item owner successfully!"
+        });
+    } catch (error) {
+        console.error("Guest Inquiry Error:", error);
+        res.status(500).json({ message: "Server Error sending guest inquiry." });
+    }
+};
+
 module.exports = {
     accessConversation,
     getConversations,
     getMessages,
-    sendMessage
+    sendMessage,
+    sendGuestInquiry
 };
