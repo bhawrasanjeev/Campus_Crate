@@ -161,32 +161,34 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: nowrap;
 }
 
 .navbar-left-group {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   flex-shrink: 0;
 }
 
 .navbar-logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
   font-weight: 800;
   font-size: 20px;
+  line-height: 1;
   color: var(--color-primary);
   text-decoration: none;
   letter-spacing: -0.5px;
   white-space: nowrap;
+  height: 36px;
 }
 
 .desktop-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  height: 36px;
 }
 
 .navbar-right-group {
@@ -194,17 +196,19 @@ a {
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+  height: 36px;
 }
 
 .navbar-search-box {
   position: relative;
   display: flex;
   align-items: center;
+  height: 36px;
   width: 220px;
   background-color: var(--color-bg);
   border-radius: 9999px;
   border: 1px solid var(--color-border);
-  padding: 6px 14px;
+  padding: 0 14px;
   transition: all 0.2s ease;
 }
 
@@ -214,10 +218,11 @@ a {
 }
 
 .navbar-user-pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 12px;
+  height: 36px;
+  padding: 0 14px;
   border-radius: 9999px;
   background-color: var(--color-surface-dim);
   border: 1px solid var(--color-border);
