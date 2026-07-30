@@ -1,4 +1,10 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+// Force IPv4 first DNS lookup to prevent ENETUNREACH on cloud environments (Render) without IPv6 support
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder("ipv4first");
+}
 
 const sendEmail = async ({ to, subject, html, text }) => {
     const user = (process.env.EMAIL_USER || "bhawrasanjeev@gmail.com").trim();
@@ -8,12 +14,13 @@ const sendEmail = async ({ to, subject, html, text }) => {
 
     console.log(`📧 Dispatching Nodemailer Email to ${to} using sender ${user} (${host}:${port})...`);
 
-    // Primary Transport: Port 587 STARTTLS (Recommended for cloud platforms like Render)
+    // Primary Transport: Forced IPv4 (family: 4) over Port 587 STARTTLS for Render
     const primaryTransporter = nodemailer.createTransport({
         host: host,
         port: port,
         secure: port === 465, // false for 587 (STARTTLS)
         requireTLS: port === 587,
+        family: 4, // Explicitly force IPv4 socket connection
         auth: {
             user: user,
             pass: pass
@@ -21,9 +28,9 @@ const sendEmail = async ({ to, subject, html, text }) => {
         tls: {
             rejectUnauthorized: false
         },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 15000
     });
 
     const mailOptions = {
@@ -41,23 +48,22 @@ const sendEmail = async ({ to, subject, html, text }) => {
     } catch (error) {
         console.error(`❌ Primary Nodemailer Error (Port ${port}):`, error.message || error);
 
-        // Auto Fallback: If Port 587 times out on Render, attempt fallback via 'service: gmail'
-        if (port === 587 && (error.code === "ETIMEDOUT" || (error.message && error.message.includes("timeout")))) {
-            console.log("🔄 Timeout on Port 587. Attempting fallback via Nodemailer Gmail service...");
-            try {
-                const fallbackTransporter = nodemailer.createTransport({
-                    service: "gmail",
-                    auth: { user, pass },
-                    tls: { rejectUnauthorized: false },
-                    connectionTimeout: 10000,
-                    socketTimeout: 10000
-                });
-                const info = await fallbackTransporter.sendMail(mailOptions);
-                console.log(`✅ Nodemailer Fallback Email Sent Successfully to ${to}. Message ID: ${info.messageId}`);
-                return info;
-            } catch (fallbackErr) {
-                console.error("❌ Nodemailer Fallback Error:", fallbackErr.message || fallbackErr);
-            }
+        // Fallback Transport: Try Gmail service with IPv4 forced
+        console.log("🔄 Attempting fallback via Nodemailer Gmail service (IPv4 forced)...");
+        try {
+            const fallbackTransporter = nodemailer.createTransport({
+                service: "gmail",
+                family: 4, // Explicitly force IPv4 socket connection
+                auth: { user, pass },
+                tls: { rejectUnauthorized: false },
+                connectionTimeout: 15000,
+                socketTimeout: 15000
+            });
+            const info = await fallbackTransporter.sendMail(mailOptions);
+            console.log(`✅ Nodemailer Fallback Email Sent Successfully to ${to}. Message ID: ${info.messageId}`);
+            return info;
+        } catch (fallbackErr) {
+            console.error("❌ Nodemailer Fallback Error:", fallbackErr.message || fallbackErr);
         }
         return null;
     }
