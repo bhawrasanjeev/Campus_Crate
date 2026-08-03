@@ -186,9 +186,9 @@ export const AdminPage = () => {
                 <span>Resolved & Returned</span>
                 <CheckCircle size={16} color="#10b981" />
               </div>
-              <div className="metric-val">342</div>
+              <div className="metric-val">10</div>
               <div className="metric-trend" style={{ color: '#10b981' }}>
-                91% match success rate
+                90% match success rate
               </div>
             </div>
 
@@ -208,7 +208,7 @@ export const AdminPage = () => {
                 <span>Registered Students</span>
                 <Users size={16} color="#f59e0b" />
               </div>
-              <div className="metric-val">{usersList.length + 1420}</div>
+              <div className="metric-val">{usersList.length + 3}</div>
               <div className="metric-trend" style={{ color: 'var(--color-text-muted)' }}>
                 Active campus network
               </div>
