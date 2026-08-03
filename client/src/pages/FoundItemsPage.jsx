@@ -34,12 +34,6 @@ export const FoundItemsPage = ({ onOpenDetails }) => {
 
   return (
     <div className="page-container">
-      <div className="banner-match">
-        <Sparkles size={18} color="var(--color-amber-dark)" />
-        <span>
-          <strong>Automated Match System:</strong> When you submit a found item, we automatically cross-reference existing lost reports and notify matching owners!
-        </span>
-      </div>
 
       <div className="page-header">
         <div className="page-title-group">
