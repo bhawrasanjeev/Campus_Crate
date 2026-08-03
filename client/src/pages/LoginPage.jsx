@@ -139,7 +139,7 @@ export const LoginPage = () => {
     if (res.success) {
       if (res.debugOtp) {
         setOtpDigits(res.debugOtp.split(''));
-        setOtpNotice(`🔑 Fresh Verification OTP: ${res.debugOtp} (Saved to database & ready)`);
+        setOtpNotice(`Fresh Verification OTP: ${res.debugOtp} (Saved to database & ready)`);
       } else {
         setOtpNotice('A new OTP code has been sent to your email.');
       }
@@ -161,7 +161,7 @@ export const LoginPage = () => {
           </div>
 
           <div>
-            <h1 className="banner-heading">reunite college items with owners</h1>
+            <h1 className="banner-heading">Reunite College Items With Owners</h1>
             <p className="banner-desc">
               Your college campus lost & found hub. Quickly report missing items or help another student
               for retrieve theirs.
